@@ -21,7 +21,20 @@ test('creates an objective, prompt, and review with an explained next date', asy
 });
 
 test('has no serious accessibility violations in the empty state', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   await page.goto('/');
+  const results = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
+  expect(consoleErrors).toEqual([]);
+});
+
+test('supports keyboard navigation and dark treatment', async ({ page }) => {
+  await page.goto('/');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeFocused();
+  await page.getByRole('button', { name: 'Switch color theme' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   const results = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
 });

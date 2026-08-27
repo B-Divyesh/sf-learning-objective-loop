@@ -65,7 +65,7 @@ function shell(content: string): string {
     <div class="app-grid">
       <nav class="side-nav" aria-label="Main navigation">
         <div class="nav-primary">
-          ${navItem('today', 'Review desk', duePrompts().length)}
+          ${navItem('today', 'Review', duePrompts().length)}
           ${navItem('objectives', 'Objective map')}
           ${navItem('data', 'Data & access')}
         </div>
@@ -190,6 +190,7 @@ function editablePrompt(prompt: Prompt): string {
   return `<li class="prompt-card"><div class="prompt-card-head"><div><p class="kicker">${prompt.manualDueAt ? 'Manual date' : `Stage ${prompt.stage + 1}`}</p><h4>${esc(prompt.question)}</h4><p>Due ${esc(formatDate(effectiveDueAt(prompt)))} · ${prompt.reviews.length} reviews</p></div><button class="button ${isDue(prompt) ? 'button-primary' : 'button-quiet'}" data-review="${esc(prompt.id)}">Review</button></div>
     <details><summary>Answer, schedule & editing</summary><div class="answer-note"><strong>Expected answer</strong><p>${esc(prompt.answer)}</p></div>
       <form class="inline-schedule" data-form="schedule" data-prompt-id="${esc(prompt.id)}"><div class="field"><label for="date-${esc(prompt.id)}">Override next review</label><input id="date-${esc(prompt.id)}" type="date" name="dueDate" value="${esc(localDateValue(effectiveDueAt(prompt)))}"></div><button class="button button-quiet" type="submit">Set date</button>${prompt.manualDueAt ? `<button class="text-button" type="button" data-clear-override="${esc(prompt.id)}">Use calculated date</button>` : ''}</form>
+      ${prompt.reviews.length ? `<div class="review-history"><strong>Recent evidence</strong><ul>${[...prompt.reviews].reverse().slice(0, 5).map((review) => `<li><span>${esc(formatDate(review.at))}</span><span>${review.correct ? 'Correct' : 'Not yet'} · confidence ${review.confidence}/5</span><span>${review.intervalDays}-day next step</span></li>`).join('')}</ul></div>` : ''}
       <form class="edit-prompt" data-form="edit-prompt" data-prompt-id="${esc(prompt.id)}"><div class="field"><label for="question-${esc(prompt.id)}">Question</label><textarea id="question-${esc(prompt.id)}" name="question" rows="2" required>${esc(prompt.question)}</textarea></div><div class="field"><label for="answer-${esc(prompt.id)}">Expected answer</label><textarea id="answer-${esc(prompt.id)}" name="answer" rows="3" required>${esc(prompt.answer)}</textarea></div><button class="button button-quiet" type="submit">Save prompt</button><button class="text-button danger" type="button" data-delete-prompt="${esc(prompt.id)}">Delete prompt</button></form>
     </details></li>`;
 }
