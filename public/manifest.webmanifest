@@ -1,0 +1,18 @@
+{
+  "id": "/?source=pwa",
+  "name": "Objective Loop",
+  "short_name": "Obj. Loop",
+  "description": "Objective-aware recall prompts with an explainable review schedule.",
+  "start_url": "/?v=1#/today",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3eeda",
+  "theme_color": "#f3eeda",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

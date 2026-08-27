@@ -1,0 +1,12 @@
+{
+  "slug": "learning-objective-loop",
+  "title": "Objective Loop",
+  "territory": "utilities",
+  "user": "A self-learner using AI and other materials who needs questions and review scheduling tied to stated learning objectives, rather than a generic chat history.",
+  "smallest_useful_product": "Offline PWA where users enter objectives and evidence links, attach manually written short-answer prompts, log confidence/correctness, and see a simple explainable next-review queue.",
+  "success_measure": "Within two weeks, 60% of active users attach at least one reviewed prompt to three objectives and can explain why every due prompt appeared.",
+  "artifact_class": "pwa-offline",
+  "monetization": "one-time",
+  "constraints": "No opaque recommendation model; local encrypted export; make review calculations inspectable and permit manual overrides.",
+  "state": "RESEARCHED"
+}
