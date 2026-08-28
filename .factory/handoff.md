@@ -78,6 +78,17 @@ npm run build
 /opt/fleet/lib/deploy-static.sh learning-objective-loop dist
 ```
 
+Deployment completed on 2026-08-28 UTC with Azure Static Web Apps deployment
+`d43babab-08ae-41e0-9d32-88e847909b6f`. The live custom domain
+`https://learning-objective-loop.sociobot.in/` returned HTTP 200. Its hashed
+entry JavaScript SHA-256 was exactly
+`62d402bf1ec216d32f838577e6cae60ebe6c47a61ea5356f912d0d2c971643df`, matching
+`dist/`; the live worker is 2,134 B and is short-cached, while the live hashed
+entry is immutable for one year. Live desktop (1440×900) and mobile (390×844)
+browser checks each found the expected title, one `h1`, one `main`, no console
+or page errors, and no horizontal overflow. Response headers include the CSP,
+frame, permissions, HSTS, referrer, and `nosniff` policies described above.
+
 No known product gaps remain. A numeric Lighthouse result is not recorded:
 the earlier verifier could not connect Lighthouse to its supplied Chromium.
 The direct bundle, Playwright, axe, offline/update, policy, privacy, desktop,
