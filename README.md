@@ -34,6 +34,7 @@ npm run build
 npm run test:e2e
 # After deploying dist/:
 npm run verify:live
+npm run test:live
 ```
 
 The exact production build command is `npm run build`; deploy the generated `dist/` directory. Playwright 1.58.2 is pinned for the browser tests.

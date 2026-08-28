@@ -80,6 +80,19 @@ test('has no serious accessibility violations in the empty state', async ({ page
   expect(consoleErrors).toEqual([]);
 });
 
+test('exposes an installable standalone manifest without parse errors', async ({ page }) => {
+  await page.goto('/');
+  const session = await page.context().newCDPSession(page);
+  const manifest = await session.send('Page.getAppManifest');
+  expect(manifest.errors).toEqual([]);
+  const data = JSON.parse(manifest.data || '{}') as { display?: string; start_url?: string; icons?: Array<{ sizes?: string; purpose?: string }> };
+  expect(data.display).toBe('standalone');
+  expect(data.start_url).toMatch(/^\/\?v=\d+#\/today$/);
+  expect(data.icons?.some((icon) => icon.sizes === '192x192')).toBeTruthy();
+  expect(data.icons?.some((icon) => icon.sizes === '512x512')).toBeTruthy();
+  expect(data.icons?.some((icon) => icon.purpose?.includes('maskable'))).toBeTruthy();
+});
+
 test('supports keyboard navigation and dark treatment', async ({ page }) => {
   await page.goto('/');
   await page.keyboard.press('Tab');
@@ -89,6 +102,9 @@ test('supports keyboard navigation and dark treatment', async ({ page }) => {
   await page.getByRole('button', { name: 'Switch color theme' }).focus();
   await page.keyboard.press('Space');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reducedDurations = await page.getByRole('button', { name: 'Switch color theme' }).evaluate((button) => getComputedStyle(button).transitionDuration.split(',').map((duration) => Number.parseFloat(duration)));
+  expect(reducedDurations.every((duration) => duration <= 0.001)).toBeTruthy();
   const results = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
 });
@@ -134,7 +150,7 @@ test('keeps populated objective links at least 44px tall on mobile', async ({ pa
   expect(objectiveLink?.height).toBeGreaterThanOrEqual(44);
   const results = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
-  expect([...requestOrigins]).toEqual(['http://127.0.0.1:4173']);
+  expect([...requestOrigins]).toEqual([new URL(page.url()).origin]);
 });
 
 test('reloads while offline after the service worker controls the page', async ({ page, context }) => {

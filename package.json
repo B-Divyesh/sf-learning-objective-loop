@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run src",
     "test:e2e": "npm run build && playwright test",
+    "test:live": "PLAYWRIGHT_BASE_URL=https://learning-objective-loop.sociobot.in playwright test tests/app.spec.ts",
     "verify:live": "node scripts/verify-live.mjs"
   },
   "devDependencies": {
