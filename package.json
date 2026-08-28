@@ -8,10 +8,11 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run src",
-    "test:e2e": "playwright test"
+    "test:e2e": "npm run build && playwright test"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10.2",
+    "@types/node": "22.15.3",
     "@playwright/test": "1.58.2",
     "typescript": "5.9.2",
     "vite": "7.3.6",

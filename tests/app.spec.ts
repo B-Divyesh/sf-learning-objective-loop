@@ -66,6 +66,15 @@ test('supports keyboard navigation and dark treatment', async ({ page }) => {
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
 });
 
+test('keeps the private empty state accessible at 390px', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const results = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth)).toBeTruthy();
+  expect(await page.locator('body').evaluate((body) => getComputedStyle(body).fontSize)).toBe('17px');
+});
+
 test('reloads while offline after the service worker controls the page', async ({ page, context }) => {
   await page.goto('/');
   await page.waitForFunction(() => navigator.serviceWorker?.ready);
