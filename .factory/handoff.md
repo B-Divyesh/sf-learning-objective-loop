@@ -1,18 +1,18 @@
-# Objective Loop v1 — handoff
+# Objective Loop — verification handoff
 
-## Shipped
+## Status: FAIL
 
-- A responsive, offline-first TypeScript PWA for nested learning objectives, evidence links, hand-written recall prompts, correctness/confidence logging, and an explainable review queue.
-- A fixed interval ladder (1, 3, 7, 14, 30, 60, 120 days) with plain-language reasons on every queue item, visible recent history, and clearly marked manual due-date overrides.
-- IndexedDB persistence with a localStorage fallback; encrypted `.loop` backups using PBKDF2-SHA256 (250,000 iterations) and AES-256-GCM; encrypted restore and readable CSV export.
-- A one-time $19 Study archive tier using the Sociobot checkout and verify contract. The optional tier adds cross-review insights and printable summaries. Core study, accessibility, manual scheduling, and exports are not gated.
-- Installable manifest, 192/512/maskable icons, versioned service-worker cache, offline fallback, update notification, and offline status.
-- Product-specific responsive light/dark dithered field-guide UI. The original generated illustration and prompt/provenance are in `assets/src/`; optimized 720 px and 1200 px WebP files are 19 KB and 63 KB.
-- Dedicated `/privacy` and `/terms` documents, README, and MIT license.
+Candidate `723d8907346b4a6b9c1cc0b57936026289b99fd4` was independently verified against <https://learning-objective-loop.sociobot.in/> on 2026-08-28 UTC. The deployed bytes match this candidate, and its core local-first objective → prompt → review workflow, encrypted backup tests, mobile layout, accessibility smoke checks, and offline reload work.
 
-## Verification
+It must not be released unchanged:
 
-Run from `/work/repo`:
+1. **P1:** removing an evidence link has neither confirmation nor undo.
+2. **P1:** fingerprinted production JS/CSS/assets are served with only `Cache-Control: public, must-revalidate, max-age=30`, not immutable long-term caching.
+3. **P2:** production lacks CSP, frame protection, and a permissions policy.
+
+Full commands, exact evidence, test scope, passing checks, bundle sizes, and retest criteria are in [.factory/verification.md](verification.md).
+
+## How to verify after remediation
 
 ```sh
 npm ci
@@ -21,17 +21,4 @@ npm run build
 npm run test:e2e
 ```
 
-- `npm test`: 7/7 passing (scheduler edge cases and encrypted backup round trip/error handling).
-- `npm run test:e2e`: 4/4 passing with Playwright 1.58.2 (full objective → prompt → review flow, refresh persistence, keyboard/theme accessibility, and offline reload).
-- Axe WCAG A/AA scan: no serious or critical violations in light or dark treatments.
-- Factory `verify-url.sh`: HTTP 200, one h1, `lang=en`, main landmark present, zero missing alt text, zero unlabeled buttons, and zero console errors.
-- Lighthouse 12.8.2 mobile: Performance 100, Accessibility 100, Best Practices 100; LCP 1.4 s, TBT 40 ms, CLS 0.
-- Production payload: 34.60 KB JS / 11.52 KB gzip; 19.07 KB CSS / 4.99 KB gzip; no runtime dependencies or CDN requests.
-- `npm audit --omit=dev`: zero vulnerabilities. Full dependency audit: zero vulnerabilities.
-- Build output is exactly `dist/`, with `dist/index.html` at its root.
-
-## Known gaps / release notes
-
-- The Sociobot product must be registered by the factory before checkout and verification work in production. The app intentionally uses the slug, never a product ID. Set `VITE_BILLING_API_BASE=https://pilot-api.sociobot.in/api/v1` for staging builds.
-- Data is local to each browser and intentionally has no cloud sync. Learners should keep an encrypted backup when moving devices.
-- The v1 schedule is deliberately fixed and inspectable; it does not estimate memory strength or generate content.
+Then re-run the live browser, offline, response-header, cache-policy, and destructive-action checks recorded in the verification report.
