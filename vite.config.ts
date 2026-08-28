@@ -22,7 +22,14 @@ function serviceWorkerSource(cacheName: string, assets: string[]): string {
   return `const CACHE = '${cacheName}';
 const CACHE_PREFIX = 'objective-loop-shell-';
 const ASSETS = ${JSON.stringify(assets)};
-const fromShellCache = (request) => caches.open(CACHE).then((cache) => cache.match(request));
+const fromShellCache = async (request) => {
+  const names = await caches.keys();
+  const shellNames = [CACHE, ...names.filter((name) => name.startsWith(CACHE_PREFIX) && name !== CACHE).reverse()];
+  for (const name of shellNames) {
+    const cached = await (await caches.open(name)).match(request);
+    if (cached) return cached;
+  }
+};
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -30,8 +37,9 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(caches.keys().then((keys) => {
-    // The current tab can briefly remain controlled by the prior worker during
-    // an update. Keep one earlier app shell so that tab still works offline.
+    // Keep one earlier app shell until every open tab has crossed the
+    // controller boundary. It also provides a fallback for an old document
+    // requesting its hashed assets during an update.
     const previousShell = keys.filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE).at(-1);
     return Promise.all(keys.filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE && key !== previousShell).map((key) => caches.delete(key)));
   }).then(() => self.clients.claim()));

@@ -20,6 +20,30 @@ test('creates an objective, prompt, and review with an explained next date', asy
   await expect(page.getByText('Explain orbital seasons')).toBeVisible();
 });
 
+test('toast expiry preserves unsaved prompt fields and review choices', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain plate tectonics');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+
+  const question = page.getByLabel('Question *');
+  const answer = page.getByLabel('Expected answer *');
+  await question.fill('What drives plate movement?');
+  await answer.fill('Mantle convection and gravity.');
+  await page.waitForTimeout(3_700);
+  await expect(question).toHaveValue('What drives plate movement?');
+  await expect(answer).toHaveValue('Mantle convection and gravity.');
+
+  await page.getByRole('button', { name: 'Add to review queue' }).click();
+  await page.getByRole('button', { name: 'Review', exact: true }).click();
+  await page.getByRole('button', { name: 'Reveal expected answer' }).click();
+  await page.getByText('Yes, correct').click();
+  await page.getByText('4', { exact: true }).click();
+  await page.waitForTimeout(3_700);
+  await expect(page.getByRole('radio', { name: 'Yes, correct' })).toBeChecked();
+  await expect(page.getByRole('radio', { name: '4' })).toBeChecked();
+});
+
 test('confirms the named evidence record before removing it', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Create your first objective' }).click();
@@ -60,10 +84,27 @@ test('supports keyboard navigation and dark treatment', async ({ page }) => {
   await page.goto('/');
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeFocused();
-  await page.getByRole('button', { name: 'Switch color theme' }).click();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('main')).toBeFocused();
+  await page.getByRole('button', { name: 'Switch color theme' }).focus();
+  await page.keyboard.press('Space');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   const results = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
+});
+
+test('stores a returned license, strips it from the URL, and unlocks after verification', async ({ page }) => {
+  let verificationRequests = 0;
+  await page.route('https://api.sociobot.in/api/v1/products/learning-objective-loop/verify?license=paid-license-token', async (route) => {
+    verificationRequests += 1;
+    await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ valid: true, reason: 'ok', expires_at: null }) });
+  });
+
+  await page.goto('/?license=paid-license-token#/data');
+  await expect(page).toHaveURL(/\/#\/data$/);
+  await expect(page.getByText('Study archive · unlocked')).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('sb_license:learning-objective-loop'))).toBe('paid-license-token');
+  expect(verificationRequests).toBe(1);
 });
 
 test('keeps the private empty state accessible at 390px', async ({ page }) => {
@@ -73,6 +114,27 @@ test('keeps the private empty state accessible at 390px', async ({ page }) => {
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth)).toBeTruthy();
   expect(await page.locator('body').evaluate((body) => getComputedStyle(body).fontSize)).toBe('17px');
+  const wordmark = await page.getByRole('link', { name: 'Objective Loop home' }).boundingBox();
+  expect(wordmark?.height).toBeGreaterThanOrEqual(44);
+  const navBoxes = await page.locator('.nav-item').evaluateAll((items) => items.map((item) => item.getBoundingClientRect()).map(({ left, right, height }) => ({ left, right, height })));
+  expect(navBoxes.every(({ height }) => height >= 44)).toBeTruthy();
+  expect(navBoxes.slice(1).every(({ left }, index) => left - navBoxes[index].right >= 8)).toBeTruthy();
+});
+
+test('keeps populated objective links at least 44px tall on mobile', async ({ page }) => {
+  const requestOrigins = new Set<string>();
+  page.on('request', (request) => requestOrigins.add(new URL(request.url()).origin));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain plate tectonics');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByRole('link', { name: 'Objective map', exact: true }).click();
+  const objectiveLink = await page.getByRole('link', { name: /Explain plate tectonics/ }).boundingBox();
+  expect(objectiveLink?.height).toBeGreaterThanOrEqual(44);
+  const results = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
+  expect([...requestOrigins]).toEqual(['http://127.0.0.1:4173']);
 });
 
 test('reloads while offline after the service worker controls the page', async ({ page, context }) => {

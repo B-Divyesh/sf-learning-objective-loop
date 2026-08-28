@@ -18,6 +18,8 @@ let loadError = '';
 let activeReviewId: string | null = null;
 let answerRevealed = false;
 let toast = '';
+let toastTimer: number | undefined;
+let updateReady = false;
 let isPremium = false;
 let licenseNotice = '';
 
@@ -78,8 +80,17 @@ function shell(content: string): string {
       <span>Made for deliberate learners. Original AI-generated field-guide artwork.</span>
       <span><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a></span>
     </footer>
-    <div class="toast-region" aria-live="polite" aria-atomic="true">${toast ? `<div class="toast">${esc(toast)}</div>` : ''}</div>
+    <div class="toast-region" aria-live="polite" aria-atomic="true">${toastMarkup()}</div>
     ${reviewDialog()}`;
+}
+
+function toastMarkup(): string {
+  return `${toast ? `<div class="toast">${esc(toast)}</div>` : ''}${updateReady ? `<div class="toast update-toast"><span>An update is ready. Reload to use it.</span><button class="button button-update" type="button" data-action="reload-update">Reload update</button></div>` : ''}`;
+}
+
+function renderToastRegion(): void {
+  const region = app.querySelector<HTMLElement>('.toast-region');
+  if (region) region.innerHTML = toastMarkup();
 }
 
 function pageHeader(kicker: string, title: string, copy: string, action = ''): string {
@@ -256,8 +267,19 @@ async function persist(message?: string): Promise<void> {
 }
 
 function showToast(message: string): void {
+  if (toastTimer !== undefined) window.clearTimeout(toastTimer);
   toast = message;
-  window.setTimeout(() => { toast = ''; render(); }, 3500);
+  renderToastRegion();
+  toastTimer = window.setTimeout(() => {
+    if (toast === message) toast = '';
+    toastTimer = undefined;
+    renderToastRegion();
+  }, 3500);
+}
+
+function showUpdateReady(): void {
+  updateReady = true;
+  renderToastRegion();
 }
 
 function formError(form: HTMLFormElement, message: string): void {
@@ -349,6 +371,11 @@ async function handleSubmit(form: HTMLFormElement): Promise<void> {
 
 app.addEventListener('submit', (event) => { const form = (event.target as HTMLElement).closest<HTMLFormElement>('form[data-form]'); if (!form) return; event.preventDefault(); void handleSubmit(form); });
 
+document.querySelector<HTMLAnchorElement>('.skip-link')?.addEventListener('click', (event) => {
+  event.preventDefault();
+  app.querySelector<HTMLElement>('main')?.focus();
+});
+
 app.addEventListener('click', (event) => {
   const target = (event.target as HTMLElement).closest<HTMLElement>('button, a'); if (!target) return;
   const reviewId = target.dataset.review;
@@ -359,6 +386,7 @@ app.addEventListener('click', (event) => {
   if (target.dataset.action === 'retry') void boot();
   if (target.dataset.action === 'csv') { download(`objective-loop-${new Date().toISOString().slice(0, 10)}.csv`, csvExport(), 'text/csv'); showToast('Readable CSV downloaded.'); render(); }
   if (target.dataset.action === 'print') window.print();
+  if (target.dataset.action === 'reload-update') location.reload();
   if (target.dataset.clearOverride) { const prompt = state.prompts.find((item) => item.id === target.dataset.clearOverride); if (prompt) { prompt.manualDueAt = null; void persist('Calculated review date restored.'); } }
   if (target.dataset.deleteEvidence) {
     const objective = state.objectives.find((item) => item.id === target.dataset.objectiveId);
@@ -385,10 +413,17 @@ function setupLicense(): void {
 
 function setupPwa(): void {
   if (!('serviceWorker' in navigator)) return;
+  let hadController = Boolean(navigator.serviceWorker.controller);
+  let updatePending = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    const completedUpdate = hadController && updatePending;
+    hadController = true;
+    updatePending = false;
+    if (completedUpdate) showUpdateReady();
+  });
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').then((registration) => {
     registration.addEventListener('updatefound', () => {
-      const worker = registration.installing;
-      worker?.addEventListener('statechange', () => { if (worker.state === 'installed' && navigator.serviceWorker.controller) { showToast('An update is ready. Reload to use it.'); render(); } });
+      if (navigator.serviceWorker.controller) updatePending = true;
     });
   }).catch(() => { /* Core app remains available if SW registration is blocked. */ }));
 }

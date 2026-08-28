@@ -18,7 +18,11 @@ test('precache survives a service-worker update and an offline reload', async ({
     await page.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
 
     await writeFile(workerPath, originalWorker.replace(/const CACHE = '([^']+)';/, "const CACHE = '$1-two';"));
-    await page.evaluate(async () => { await (await navigator.serviceWorker.ready).update(); });
+    await page.evaluate(async () => {
+      const changed = new Promise<void>((resolve) => navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), { once: true }));
+      await (await navigator.serviceWorker.ready).update();
+      await changed;
+    });
     await expect(page.getByText('An update is ready. Reload to use it.')).toBeVisible();
     await page.waitForFunction(() => caches.keys().then((keys) => keys.some((key) => key.endsWith('-two'))));
     expect(await page.evaluate(async (entry) => {
@@ -27,11 +31,12 @@ test('precache survives a service-worker update and an offline reload', async ({
     }, entryScript)).toBeTruthy();
     await page.waitForFunction(async () => {
       const registration = await navigator.serviceWorker.getRegistration();
-      return Boolean(registration?.active && registration.active.state === 'activated' && !registration.installing && !registration.waiting);
+      return Boolean(registration?.active && registration.active === navigator.serviceWorker.controller && registration.active.state === 'activated' && !registration.installing && !registration.waiting);
     });
 
     await context.setOffline(true);
-    await page.reload({ waitUntil: 'domcontentloaded', timeout: 8_000 });
+    await page.getByRole('button', { name: 'Reload update' }).click();
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.getByRole('heading', { name: /Objective Loop/i, level: 1 })).toBeVisible();
     await expect(page.getByText(/Offline · saved here/i)).toBeAttached();
   } finally {

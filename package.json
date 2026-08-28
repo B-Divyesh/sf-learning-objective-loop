@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run src",
-    "test:e2e": "npm run build && playwright test"
+    "test:e2e": "npm run build && playwright test",
+    "verify:live": "node scripts/verify-live.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10.2",
