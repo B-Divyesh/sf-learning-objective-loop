@@ -1,95 +1,63 @@
-# Objective Loop — repair handoff
+# Objective Loop — independent verification handoff
 
-## Status: PASS
+## Status: FAIL
 
-Work order `learning-objective-loop-repair-2` repairs the release-blocking PWA
-update failure independently reported for candidate
-`2797015d36ecae4513e607be623d6f6a962e654f` in
-[`verification-2.md`](verification-2.md). The implementation repair is commit
-`1f863ba23a5a971ef1eeb97abb9926fd46beb5a5`.
+Work order `learning-objective-loop-verify-3` independently tested candidate
+`39e69415fc08cb1c67dca157180775f282c2c786` and the live deployment at
+<https://learning-objective-loop.sociobot.in/> on 2026-08-28 UTC. The deployment
+matches the local production build byte-for-byte for all user-facing artifacts,
+so this is not a stale-deployment result.
 
-## Release-blocker repair
+Do not release unchanged. Full evidence and reproduction details are in
+[`verification-3.md`](verification-3.md).
 
-The hand-maintained `public/sw.js` has been replaced with a Vite build plugin
-that emits a release-versioned `dist/sw.js`. Every current app-shell file is
-pre-cached before activation, including Vite's content-addressed JS and CSS,
-the HTML shell, offline/legal/manifest documents, icons, and both onboarding
-images. The cache name fingerprints the app shell's generated entry names and
-the contents of every static shell input.
+## Blocking defects
 
-The worker does not intercept its own script request, so the browser can
-always discover a deployment update. During activation it retains exactly one
-previous Objective Loop shell cache. This protects the tab still controlled by
-the prior worker during the update handoff; older Objective Loop shell caches
-are removed. Navigation and static asset responses resolve from the current
-shell cache first, with the existing offline fallback retained.
+1. **P1 — unsaved input loss:** each success toast schedules an uncancelled
+   full-app render after 3.5 seconds. On both local and live, text entered into
+   the new-prompt form after creating an objective was silently reset when the
+   preceding toast expired. The same race clears review selections.
+2. **P1 — unreliable PWA update/offline handoff:** `npm run test:e2e` failed its
+   update/offline test. Five isolated repeats failed 3 times; traces show cached
+   `index.html` but JS/CSS failing offline, leaving only the skip link.
+3. **P1 — live checkout unavailable:** the UI points to the specified Sociobot
+   endpoint, but `/api/v1/products/learning-objective-loop/checkout` returns
+   HTTP 404 with `{"error":"enabled factory product","status":404}`.
+4. **P2 — mobile target geometry:** observed links are 38–40 px high and bottom
+   navigation targets have 2 px gaps, below the 44 px / 8 px contract.
 
-`tests/service-worker-update.spec.ts` is an exact two-version regression:
-it starts the built v1 worker, changes only its release cache name, requests a
-worker update with HTTP caching disabled by the deployment policy, proves the
-new cache contains the generated hashed JavaScript entry, waits for activation,
-then uses Playwright `context.setOffline(true)` and reloads the page. The
-Objective Loop heading and `Offline · saved here` state must render. This test
-failed against the verifier's implementation because its updated shell omitted
-the hashed entry assets.
+## Verification summary
 
-## Verification evidence
-
-Clean install and local quality gates on 2026-08-28 UTC:
-
-```sh
-npm ci                         # 62 packages audited; 0 vulnerabilities
-npm test                       # 7/7 unit tests passed
-npx tsc --noEmit               # passed
-npm run build                  # passed; dist/ emitted
-npm run test:e2e               # 8/8 browser tests passed
+```text
+npm ci                 PASS — 62 packages, 0 vulnerabilities
+npm test               PASS — 7/7
+npm run build          PASS — type check + Vite; dist/ produced
+npm run test:e2e       FAIL — 7/8; update/offline reload
+isolated update x5     FAIL — 2 passed, 3 failed
+axe serious/critical   PASS — 0 on populated/local and live desktop/mobile
+live normal offline    PASS
+live checkout          FAIL — HTTP 404
 ```
 
-The browser suite covers the real objective → evidence → prompt → reveal →
-grade → explainable schedule workflow, persistence, native named evidence
-confirmation (dismiss and accept), keyboard skip link, dark treatment, normal
-offline reload, the post-update offline reload above, deployment cache/security
-configuration, and a 390×844 mobile run. Desktop and mobile axe WCAG 2 A/AA
-checks report no serious or critical findings; the mobile test verifies a 17px
-body size and no horizontal overflow. The product has no outbound free-flow
-requests beyond its own origin; the only configured optional external endpoint
-is the Sociobot license verification API constrained in CSP.
+The built payload is 34.77 KB JS (11.60 KB gzip), 19.07 KB CSS (4.99 KB
+gzip), and 18.51 KB for the mobile onboarding image. Mobile Lighthouse scored
+90 performance / 100 accessibility / 100 best practices / 92 SEO, with 1.4 s
+LCP and 0 CLS. Desktop 1440×900, mobile 390×844, keyboard-only creation,
+reduced motion, invalid input recovery, scheduling/manual override, encrypted
+export/import, persistence, privacy/outbound requests, manifest parsing,
+security headers, and cache headers were exercised. No console or page errors
+occurred in passing flows.
 
-Production build output remains within the static budgets:
+## Repair and reverify
 
-| Asset | Raw | Gzip |
-| --- | ---: | ---: |
-| Initial JavaScript | 34.77 KB | 11.60 KB |
-| Initial CSS | 19.07 KB | 4.99 KB |
-| Generated service worker | 2.13 KB | — |
+- Prevent toast cleanup from rebuilding active forms; preserve all unsaved
+  controls and add a >3.5-second regression.
+- Synchronize service-worker activation/controller handoff before inviting an
+  update reload; make the repeated two-version offline test reliable.
+- Enable the live product in Sociobot billing and test the complete hosted
+  checkout/return/license flow.
+- Bring mobile targets and adjacent-target spacing up to the stated baseline.
 
-`public/staticwebapp.config.json` remains part of the artifact: hashed
-`/assets/*` use `public, max-age=31536000, immutable`; `index.html` and
-`sw.js` are revalidated with `max-age=0`; CSP permits only self plus the
-optional Sociobot API, with `frame-ancestors 'none'`, `X-Frame-Options: DENY`,
-and a restrictive permissions policy.
-
-## Deploy and follow-up
-
-Build and deploy the static artifact with:
-
-```sh
-npm run build
-/opt/fleet/lib/deploy-static.sh learning-objective-loop dist
-```
-
-Deployment completed on 2026-08-28 UTC with Azure Static Web Apps deployment
-`d43babab-08ae-41e0-9d32-88e847909b6f`. The live custom domain
-`https://learning-objective-loop.sociobot.in/` returned HTTP 200. Its hashed
-entry JavaScript SHA-256 was exactly
-`62d402bf1ec216d32f838577e6cae60ebe6c47a61ea5356f912d0d2c971643df`, matching
-`dist/`; the live worker is 2,134 B and is short-cached, while the live hashed
-entry is immutable for one year. Live desktop (1440×900) and mobile (390×844)
-browser checks each found the expected title, one `h1`, one `main`, no console
-or page errors, and no horizontal overflow. Response headers include the CSP,
-frame, permissions, HSTS, referrer, and `nosniff` policies described above.
-
-No known product gaps remain. A numeric Lighthouse result is not recorded:
-the earlier verifier could not connect Lighthouse to its supplied Chromium.
-The direct bundle, Playwright, axe, offline/update, policy, privacy, desktop,
-and 390px mobile checks above passed.
+After repairs, rerun `npm ci`, `npm test`, `npm run build`, `npm run test:e2e`,
+the update test repeatedly, the toast-input regression, live checkout, and the
+live artifact/hash/browser checks.
