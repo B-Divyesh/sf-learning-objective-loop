@@ -20,6 +20,33 @@ test('creates an objective, prompt, and review with an explained next date', asy
   await expect(page.getByText('Explain orbital seasons')).toBeVisible();
 });
 
+test('confirms the named evidence record before removing it', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain orbital seasons');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByLabel('Link label').fill('Season notes');
+  await page.getByLabel('Web address').fill('https://example.com/seasons');
+  await page.getByRole('button', { name: 'Attach evidence' }).click();
+  await expect(page.getByRole('link', { name: 'Season notes' })).toBeVisible();
+
+  page.once('dialog', async (dialog) => {
+    expect(dialog.type()).toBe('confirm');
+    expect(dialog.message()).toContain('Remove evidence “Season notes” from “Explain orbital seasons”?');
+    expect(dialog.message()).toContain('https://example.com/seasons');
+    await dialog.dismiss();
+  });
+  await page.getByRole('button', { name: 'Remove evidence Season notes' }).click();
+  await expect(page.getByRole('link', { name: 'Season notes' })).toBeVisible();
+  await expect(page.getByText('1 links')).toBeVisible();
+
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Remove evidence Season notes' }).click();
+  await expect(page.getByText('Evidence link removed.')).toBeVisible();
+  await expect(page.getByText('0 links')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Season notes' })).toHaveCount(0);
+});
+
 test('has no serious accessibility violations in the empty state', async ({ page }) => {
   const consoleErrors: string[] = [];
   page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });

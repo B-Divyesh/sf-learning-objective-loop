@@ -1,8 +1,8 @@
-const CACHE = 'objective-loop-shell-v1';
+const CACHE = 'objective-loop-shell-v2';
 const ASSETS = [
   '/', '/index.html', '/offline.html', '/manifest.webmanifest',
   '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/icon-maskable-512.png',
-  '/assets/objective-field-map.webp', '/assets/objective-field-map-720.webp'
+  '/assets/objective-field-map.e409d0f7909f.webp', '/assets/objective-field-map-720.427b472e8f53.webp'
 ];
 
 self.addEventListener('install', (event) => {

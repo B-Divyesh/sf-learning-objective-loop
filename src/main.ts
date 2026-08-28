@@ -95,7 +95,7 @@ function emptyToday(): string {
       <ol class="steps"><li><span>01</span>State an objective</li><li><span>02</span>Write a recall prompt</li><li><span>03</span>Review with evidence</li></ol>
       <a class="button button-primary" href="#/new-objective">Create your first objective</a>
     </div>
-    <picture><source media="(max-width: 720px)" srcset="/assets/objective-field-map-720.webp"><img src="/assets/objective-field-map.webp" width="1200" height="800" alt="A screen-printed notebook diagram linking an objective tree to prompt slips and a review calendar." fetchpriority="high" decoding="async"></picture>
+    <picture><source media="(max-width: 720px)" srcset="/assets/objective-field-map-720.427b472e8f53.webp"><img src="/assets/objective-field-map.e409d0f7909f.webp" width="1200" height="800" alt="A screen-printed notebook diagram linking an objective tree to prompt slips and a review calendar." fetchpriority="high" decoding="async"></picture>
   </section>`;
 }
 
@@ -360,7 +360,14 @@ app.addEventListener('click', (event) => {
   if (target.dataset.action === 'csv') { download(`objective-loop-${new Date().toISOString().slice(0, 10)}.csv`, csvExport(), 'text/csv'); showToast('Readable CSV downloaded.'); render(); }
   if (target.dataset.action === 'print') window.print();
   if (target.dataset.clearOverride) { const prompt = state.prompts.find((item) => item.id === target.dataset.clearOverride); if (prompt) { prompt.manualDueAt = null; void persist('Calculated review date restored.'); } }
-  if (target.dataset.deleteEvidence) { const objective = state.objectives.find((item) => item.id === target.dataset.objectiveId); if (objective) { objective.evidence = objective.evidence.filter((item) => item.id !== target.dataset.deleteEvidence); void persist('Evidence link removed.'); } }
+  if (target.dataset.deleteEvidence) {
+    const objective = state.objectives.find((item) => item.id === target.dataset.objectiveId);
+    const evidence = objective?.evidence.find((item) => item.id === target.dataset.deleteEvidence);
+    if (objective && evidence && confirm(`Remove evidence “${evidence.label}” from “${objective.title}”?\n\nThis removes the saved link: ${evidence.url}`)) {
+      objective.evidence = objective.evidence.filter((item) => item.id !== evidence.id);
+      void persist('Evidence link removed.');
+    }
+  }
   if (target.dataset.deletePrompt) { const prompt = state.prompts.find((item) => item.id === target.dataset.deletePrompt); if (prompt && confirm(`Delete “${prompt.question}” and its ${prompt.reviews.length} review records?`)) { state.prompts = state.prompts.filter((item) => item.id !== prompt.id); void persist('Prompt deleted.'); } }
   if (target.dataset.deleteObjective) { const objective = state.objectives.find((item) => item.id === target.dataset.deleteObjective); if (objective) { const promptCount = state.prompts.filter((item) => item.objectiveId === objective.id).length; if (confirm(`Delete “${objective.title}” and its ${promptCount} prompts? Sub-objectives will become top-level.`)) { state.prompts = state.prompts.filter((item) => item.objectiveId !== objective.id); state.objectives.forEach((item) => { if (item.parentId === objective.id) item.parentId = null; }); state.objectives = state.objectives.filter((item) => item.id !== objective.id); void persist('Objective and its prompts deleted.'); location.hash = '/objectives'; } } }
 });
