@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 
 test('uses a concrete first-screen headline and names self-learners at desktop and 390px', async ({ page }) => {
@@ -44,7 +45,7 @@ test('ships social metadata, a Param Factory footer, and a designed static 404',
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Objective Loop/);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /objective-loop-social\.webp$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-  await expect(page.getByText(/Built by Param Factory · build 1\.0\.1-repair-5/)).toBeVisible();
+  await expect(page.getByText(/Built by Param Factory · build 1\.0\.1-repair-6/)).toBeVisible();
   await page.goto('/404.html');
   await expect(page.getByRole('heading', { name: 'This page is not in the notebook', level: 1 })).toBeVisible();
   await expect(page).toHaveTitle('Page not found — Objective Loop');
@@ -280,10 +281,38 @@ test('@claim:manual-override persists a visible manual date and restores the cal
   await expect(page.getByText('Stage 1', { exact: true })).toBeVisible();
 });
 
-test('@claim:one-time-price shows the $19 Sociobot purchase and keeps export free', async ({ page }) => {
-  await page.goto('/#/data');
-  await expect(page.getByRole('link', { name: 'Buy once · $19' })).toHaveAttribute('href', 'https://api.sociobot.in/api/v1/products/learning-objective-loop/checkout');
-  await expect(page.getByRole('button', { name: 'Export readable CSV' })).toBeVisible();
+test('@claim:one-time-price hands the $19 purchase through a 303 checkout handoff and keeps export free', async ({ page }) => {
+  const checkout = 'https://api.sociobot.in/api/v1/products/learning-objective-loop/checkout';
+  let checkoutRequests = 0;
+  const fixture = createServer((request, response) => {
+    expect(request.url).toBe('/hosted-checkout');
+    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    response.end('<!doctype html><title>Hosted checkout</title><h1>Hosted checkout fixture</h1>');
+  });
+  await new Promise<void>((resolve) => fixture.listen(0, '127.0.0.1', resolve));
+  const address = fixture.address();
+  if (!address || typeof address === 'string') throw new Error('Could not start the checkout fixture.');
+  const hostedCheckout = `http://127.0.0.1:${address.port}/hosted-checkout`;
+
+  try {
+    await page.goto('/#/data');
+    await page.route(checkout, async (route) => {
+      checkoutRequests += 1;
+      expect(route.request().isNavigationRequest()).toBeTruthy();
+      await route.fulfill({ status: 303, headers: { location: hostedCheckout } });
+    });
+    const purchase = page.getByRole('link', { name: 'Buy once · $19' });
+    await expect(purchase).toHaveAttribute('href', checkout);
+    await expect(page.getByRole('button', { name: 'Export readable CSV' })).toBeVisible();
+    await Promise.all([
+      page.waitForURL(hostedCheckout),
+      purchase.click(),
+    ]);
+    await expect(page.getByRole('heading', { name: 'Hosted checkout fixture' })).toBeVisible();
+    expect(checkoutRequests).toBe(1);
+  } finally {
+    await new Promise<void>((resolve, reject) => fixture.close((error) => error ? reject(error) : resolve()));
+  }
 });
 
 test('toast expiry preserves unsaved prompt fields and review choices', async ({ page }) => {

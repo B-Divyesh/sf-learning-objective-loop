@@ -60,7 +60,7 @@
     "claim": "Study archive is a one-time $19 Sociobot purchase while core CSV export remains free.",
     "where": "Data & access, Terms, README",
     "test": "npm run test:e2e -- --grep \"@claim:one-time-price\"",
-    "sandbox": "fresh browser context on Data & access; inspect the hosted checkout target and free export control"
+    "sandbox": "fresh browser context on Data & access; intercept the Sociobot checkout response, follow its controlled 303 handoff to a hosted-checkout fixture, and assert the free CSV control remains available"
   },
   {
     "id": "verified-license",

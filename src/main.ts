@@ -9,7 +9,7 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 if (!app) throw new Error('App root is missing.');
 
 const slug = 'learning-objective-loop';
-const buildId = '1.0.1-repair-5';
+const buildId = '1.0.1-repair-6';
 const billingBase = import.meta.env.VITE_BILLING_API_BASE || 'https://api.sociobot.in/api/v1';
 const licenseKey = `sb_license:${slug}`;
 const verdictKey = `${licenseKey}:verdict`;
