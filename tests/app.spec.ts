@@ -8,9 +8,12 @@ test('uses a concrete first-screen headline and names self-learners at desktop a
     await page.setViewportSize(viewport);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Plan reviews around your learning objectives', level: 1 })).toBeVisible();
-    await expect(page.getByText('For self-learners who use AI or other materials and need recall prompts tied to goals they can explain.')).toBeVisible();
+    await expect(page.getByText('For self-learners using AI or other materials who need recall prompts tied to clear learning objectives.')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Try it with sample data' })).toBeVisible();
-    await expect(page.getByText('Opens three sample objectives and their due prompts.')).toBeVisible();
+    const hint = page.getByText('Opens three sample objectives and their due prompts.');
+    await expect(hint).toBeVisible();
+    const box = await hint.boundingBox();
+    expect(box && box.y + box.height <= viewport.height).toBeTruthy();
     await expect(page.locator('main h1')).toHaveCount(1);
   }
 });
@@ -22,10 +25,10 @@ test('uses real routes with route titles, focus, and an announcement after keybo
   await page.getByRole('link', { name: 'Data & access' }).focus();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/data$/);
-  const heading = page.getByRole('heading', { name: 'Your learning record belongs to you', level: 1 });
+  const heading = page.getByRole('heading', { name: 'Export, restore, or unlock reports', level: 1 });
   await expect(heading).toBeFocused();
   await expect(page).toHaveTitle('Data & access — Objective Loop');
-  await expect(page.locator('#route-announcer')).toHaveText('Your learning record belongs to you page.');
+  await expect(page.locator('#route-announcer')).toHaveText('Export, restore, or unlock reports page.');
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('heading', { name: 'Plan reviews around your learning objectives', level: 1 })).toBeFocused();
@@ -36,6 +39,11 @@ test('uses real routes with route titles, focus, and an announcement after keybo
   await page.goto('/terms');
   await expect(page).toHaveTitle('Terms — Objective Loop');
   await expect(page.getByRole('heading', { name: 'Terms', level: 1 })).toHaveCount(1);
+  await page.goto('/today');
+  await expect(page).toHaveTitle('Review queue — Objective Loop');
+  await page.goto('/demo');
+  await page.getByRole('link', { name: /Explain why seasons differ by hemisphere/ }).click();
+  await expect(page).toHaveTitle('Explain why seasons differ by hemi — Objective Loop');
   expect(consoleErrors).toEqual([]);
 });
 
@@ -45,10 +53,14 @@ test('ships social metadata, a Param Factory footer, and a designed static 404',
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Objective Loop/);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /objective-loop-social\.webp$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-  await expect(page.getByText(/Built by Param Factory · build 1\.0\.1-repair-6/)).toBeVisible();
+  await expect(page.getByText(/Built by Param Factory · build 1\.0\.2-polish-1/)).toBeVisible();
   await page.goto('/404.html');
   await expect(page.getByRole('heading', { name: 'This page is not in the notebook', level: 1 })).toBeVisible();
   await expect(page).toHaveTitle('Page not found — Objective Loop');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /requested Objective Loop page/i);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /404\.html$/);
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Privacy' })).toBeVisible();
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Terms' })).toBeVisible();
 });
 
 test('rejects non-HTTP(S) evidence links before persistence', async ({ page }) => {
@@ -70,6 +82,7 @@ test('rejects non-HTTP(S) evidence links before persistence', async ({ page }) =
 });
 
 test('@claim:objective-review-workflow creates an objective, prompt, and review with an explained next date', async ({ page }) => {
+  await page.clock.install({ time: new Date('2030-01-01T12:00:00Z') });
   await page.goto('/');
   await page.getByRole('link', { name: 'Create your first objective' }).click();
   await page.getByLabel('Objective *').fill('Explain orbital seasons');
@@ -78,14 +91,22 @@ test('@claim:objective-review-workflow creates an objective, prompt, and review 
   await page.getByLabel('Question *').fill('Why does axial tilt create seasons?');
   await page.getByLabel('Expected answer *').fill('Tilt changes the angle and duration of sunlight.');
   await page.getByRole('button', { name: 'Add to review queue' }).click();
-  await page.getByRole('button', { name: 'Review', exact: true }).click();
+  await page.getByRole('button', { name: 'Review this prompt', exact: true }).click();
   await page.getByRole('button', { name: 'Reveal expected answer' }).click();
   await page.getByText('Yes, correct').click();
   await page.getByText('5', { exact: true }).click();
   await page.getByRole('button', { name: 'Log answer & schedule next' }).click();
   await expect(page.getByText(/advances one interval/i)).toBeVisible();
+  await expect(page.getByText('Next review: 3 days.')).toBeVisible();
+  await expect(page.getByText(/Due Jan 4, 2030/)).toBeVisible();
+  await page.getByText('Answer, schedule & editing').click();
+  await expect(page.getByText('Correct · confidence 5/5')).toBeVisible();
+  await expect(page.getByText('3-day next step')).toBeVisible();
   await page.reload();
   await expect(page.getByText('Explain orbital seasons')).toBeVisible();
+  await expect(page.getByText(/Due Jan 4, 2030/)).toBeVisible();
+  await page.getByText('Answer, schedule & editing').click();
+  await expect(page.getByText('Correct · confidence 5/5')).toBeVisible();
 });
 
 test('@claim:csv-export rejects blank edits without changing saved or exported learning content', async ({ page }) => {
@@ -202,7 +223,7 @@ test('closes a review with Escape, keeps it closed on navigation, and restores f
   await page.getByLabel('Expected answer *').fill('Mass and distance from the centre of the body.');
   await page.getByRole('button', { name: 'Add to review queue' }).click();
 
-  const trigger = page.getByRole('button', { name: 'Review', exact: true });
+  const trigger = page.getByRole('button', { name: 'Review this prompt', exact: true });
   await trigger.click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Close review' })).toBeFocused();
@@ -212,11 +233,11 @@ test('closes a review with Escape, keeps it closed on navigation, and restores f
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(trigger).toBeFocused();
   await page.getByRole('link', { name: 'Data & access' }).click();
-  await expect(page.getByRole('heading', { name: 'Your learning record belongs to you' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Export, restore, or unlock reports' })).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await page.getByRole('link', { name: /^Review/ }).click();
-  const reopenedTrigger = page.getByRole('button', { name: 'Review What determines escape velocity?' });
+  const reopenedTrigger = page.getByRole('button', { name: 'Review this prompt: What determines escape velocity?' });
   await reopenedTrigger.click();
   await page.getByRole('button', { name: 'Close review' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -238,24 +259,29 @@ test('renders a populated objective map without CSP-blocked inline styles', asyn
 test('@claim:demo-sandbox opens sample data in one click without touching real data', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await page.getByRole('link', { name: 'Try it with sample data' }).click();
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Private control objective');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByRole('link', { name: 'Try sample data' }).click();
   await expect(page).toHaveURL(/\/demo$/);
   await expect(page.getByText('Demo — sample data, nothing is saved to your notebook.')).toBeVisible();
   await expect(page.locator('.metric-strip div').filter({ hasText: 'active objectives' }).getByText('3')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Why is it summer in Australia when it is winter in Europe?' })).toBeVisible();
   const demoResults = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(demoResults.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
-  await page.getByRole('link', { name: 'New objective' }).click();
+  await page.getByRole('link', { name: 'Create objective' }).click();
   await page.getByLabel('Objective *').fill('Demo-only objective');
   await page.getByRole('button', { name: 'Save objective' }).click();
   await expect(page.getByRole('heading', { name: 'Demo-only objective' })).toBeVisible();
   await page.getByRole('button', { name: 'Reset demo' }).click();
   await expect(page.getByText('Demo sample restored.')).toBeVisible();
   await expect(page.getByText('Demo-only objective')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Start for real' }).click();
+  await page.getByRole('button', { name: 'Open my notebook' }).click();
   await expect(page).toHaveURL(/\/today$/);
-  await expect(page.getByRole('link', { name: 'Try it with sample data' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Try sample data' })).toBeVisible();
   await expect(page.getByText('Demo-only objective')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Objective map', exact: true }).click();
+  await expect(page.getByRole('link', { name: /Private control objective/ })).toBeVisible();
   await page.goto('/?demo=1#/today');
   await expect(page.locator('.metric-strip div').filter({ hasText: 'active objectives' }).getByText('3')).toBeVisible();
   await expect(page.getByText('Demo-only objective')).toHaveCount(0);
@@ -301,7 +327,7 @@ test('@claim:one-time-price hands the $19 purchase through a 303 checkout handof
       expect(route.request().isNavigationRequest()).toBeTruthy();
       await route.fulfill({ status: 303, headers: { location: hostedCheckout } });
     });
-    const purchase = page.getByRole('link', { name: 'Buy once · $19' });
+    const purchase = page.getByRole('link', { name: /Buy Study archive · \$19/ });
     await expect(purchase).toHaveAttribute('href', checkout);
     await expect(page.getByRole('button', { name: 'Export readable CSV' })).toBeVisible();
     await Promise.all([
@@ -330,7 +356,7 @@ test('toast expiry preserves unsaved prompt fields and review choices', async ({
   await expect(answer).toHaveValue('Mantle convection and gravity.');
 
   await page.getByRole('button', { name: 'Add to review queue' }).click();
-  await page.getByRole('button', { name: 'Review', exact: true }).click();
+  await page.getByRole('button', { name: 'Review this prompt', exact: true }).click();
   await page.getByRole('button', { name: 'Reveal expected answer' }).click();
   await page.getByText('Yes, correct').click();
   await page.getByText('4', { exact: true }).click();
@@ -411,9 +437,26 @@ test('@claim:verified-license stores a returned license, strips it from the URL,
     await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ valid: true, reason: 'ok', expires_at: null }) });
   });
 
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain orbital seasons');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByLabel('Question *').fill('Why does axial tilt create seasons?');
+  await page.getByLabel('Expected answer *').fill('Tilt changes sunlight angle and day length.');
+  await page.getByRole('button', { name: 'Add to review queue' }).click();
+  await page.getByRole('button', { name: 'Review this prompt', exact: true }).click();
+  await page.getByRole('button', { name: 'Reveal expected answer' }).click();
+  await page.getByText('Yes, correct').click();
+  await page.getByText('4', { exact: true }).click();
+  await page.getByRole('button', { name: 'Log answer & schedule next' }).click();
   await page.goto('/?license=paid-license-token#/data');
   await expect(page).toHaveURL(/\/data$/);
   await expect(page.getByText('Study archive · unlocked')).toBeVisible();
+  await expect(page.getByText('Explain orbital seasons')).toBeVisible();
+  await expect(page.getByText('100% recall · 1 reviews')).toBeVisible();
+  await page.evaluate(() => { window.print = () => { document.documentElement.dataset.printed = 'yes'; }; });
+  await page.getByRole('button', { name: 'Print weekly summary' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-printed', 'yes');
   expect(await page.evaluate(() => localStorage.getItem('sb_license:learning-objective-loop'))).toBe('paid-license-token');
   expect(verificationRequests).toBe(1);
 });
@@ -430,12 +473,12 @@ test('keeps the private empty state accessible at 390px', async ({ page }) => {
   const navBoxes = await page.locator('.nav-item').evaluateAll((items) => items.map((item) => item.getBoundingClientRect()).map(({ left, right, height }) => ({ left, right, height })));
   expect(navBoxes.every(({ height }) => height >= 44)).toBeTruthy();
   expect(navBoxes.slice(1).every(({ left }, index) => left - navBoxes[index].right >= 8)).toBeTruthy();
-  const lastFact = await page.getByText('Core notebook free; Study archive $19 once.').boundingBox();
+  const lastFact = await page.getByText('Core reviews and exports are free. History reports cost $19 once.').boundingBox();
   const dock = await page.locator('.side-nav').boundingBox();
   expect(lastFact && dock && lastFact.y + lastFact.height <= dock.y).toBeTruthy();
 });
 
-test('@claim:private-core keeps populated objective links at least 44px tall on mobile', async ({ page }) => {
+test('@claim:private-core keeps the full local study workflow on the product origin', async ({ page }) => {
   const requestOrigins = new Set<string>();
   page.on('request', (request) => requestOrigins.add(new URL(request.url()).origin));
   await page.setViewportSize({ width: 390, height: 844 });
@@ -443,6 +486,28 @@ test('@claim:private-core keeps populated objective links at least 44px tall on 
   await page.getByRole('link', { name: 'Create your first objective' }).click();
   await page.getByLabel('Objective *').fill('Explain plate tectonics');
   await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByLabel('Link label').fill('Plate notes');
+  await page.getByLabel('Web address').fill('https://example.com/plate-notes');
+  await page.getByRole('button', { name: 'Attach evidence' }).click();
+  await page.getByLabel('Question *').fill('What drives plate movement?');
+  await page.getByLabel('Expected answer *').fill('Convection, slab pull, and ridge push.');
+  await page.getByRole('button', { name: 'Add to review queue' }).click();
+  await page.getByText('Answer, schedule & editing').click();
+  await page.getByLabel('Override next review').fill('2030-01-15');
+  await page.getByRole('button', { name: 'Set date' }).click();
+  await page.getByRole('button', { name: /^Review this prompt/ }).click();
+  await page.getByRole('button', { name: 'Reveal expected answer' }).click();
+  await page.getByText('Not yet').click();
+  await page.getByText('1', { exact: true }).click();
+  await page.getByRole('button', { name: 'Log answer & schedule next' }).click();
+  await page.getByRole('link', { name: 'Data & access' }).click();
+  const csvDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export readable CSV' }).click();
+  await csvDownload;
+  await page.getByLabel('Backup passphrase').first().fill('private-passphrase');
+  const backupDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download encrypted backup' }).click();
+  await backupDownload;
   await page.getByRole('link', { name: 'Objective map', exact: true }).click();
   const objectiveLink = await page.getByRole('link', { name: /Explain plate tectonics/ }).boundingBox();
   expect(objectiveLink?.height).toBeGreaterThanOrEqual(44);
@@ -461,4 +526,130 @@ test('@claim:offline-reload reloads while offline after the service worker contr
   await expect(page.getByRole('heading', { name: 'Why is it summer in Australia when it is winter in Europe?' })).toBeVisible();
   await expect(page.getByText('Demo — sample data, nothing is saved to your notebook.')).toBeVisible();
   await expect(page.getByText(/Offline · saved here/i)).toBeAttached();
+});
+
+test('@claim:manual-input-only keeps prompt authoring manual and shows every schedule calculation', async ({ page }) => {
+  await page.goto('/demo');
+  await expect(page.locator('input[type="file"][accept*="csv"]')).toHaveCount(0);
+  await expect(page.getByText('Why now?', { exact: true }).first()).toBeVisible();
+  await page.getByText('Show calculation').first().click();
+  await expect(page.getByText(/base interval|New prompts enter/i).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /Review this prompt/ }).first()).toBeVisible();
+});
+
+test('@claim:nested-objectives-evidence persists a child objective and its evidence link', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Understand the solar system');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByRole('link', { name: 'Create objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain axial tilt');
+  await page.getByLabel('Parent objective').selectOption({ label: 'Understand the solar system' });
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByLabel('Link label').fill('Tilt reference');
+  await page.getByLabel('Web address').fill('https://example.com/tilt');
+  await page.getByRole('button', { name: 'Attach evidence' }).click();
+  await page.reload();
+  await expect(page.getByRole('link', { name: /Tilt reference.*opens external site/i })).toHaveAttribute('href', 'https://example.com/tilt');
+  await page.getByRole('link', { name: 'Objective map', exact: true }).click();
+  await expect(page.locator('.objective-tree')).toContainText('Understand the solar system');
+  await expect(page.locator('.objective-tree')).toContainText('Explain axial tilt');
+});
+
+test('@claim:study-storage saves real study records in IndexedDB and uses a separate demo namespace', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Stored objective');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  expect(await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => { const request = indexedDB.open('objective-loop'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+    const record = await new Promise<unknown>((resolve, reject) => { const request = db.transaction('records').objectStore('records').get('state'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+    db.close(); return Boolean(record);
+  })).toBeTruthy();
+  await page.goto('/demo');
+  expect(await page.evaluate(async () => (await indexedDB.databases()).some((database) => database.name === 'objective-loop-demo'))).toBeTruthy();
+});
+
+test('@claim:no-tracking-or-third-party-runtime loads the demo without third-party scripts, fonts, analytics, or ads', async ({ page }) => {
+  const requests: Array<{ url: string; type: string }> = [];
+  page.on('request', (request) => requests.push({ url: request.url(), type: request.resourceType() }));
+  await page.goto('/demo');
+  await page.getByRole('button', { name: /Review this prompt/ }).first().click();
+  await page.getByRole('button', { name: 'Reveal expected answer' }).click();
+  await page.getByText('Yes, correct').click();
+  await page.getByText('4', { exact: true }).click();
+  await page.getByRole('button', { name: 'Log answer & schedule next' }).click();
+  const origin = new URL(page.url()).origin;
+  expect(requests.every(({ url }) => new URL(url).origin === origin)).toBeTruthy();
+  expect(requests.filter(({ type }) => type === 'script' || type === 'font').every(({ url }) => new URL(url).origin === origin)).toBeTruthy();
+});
+
+test('@claim:sociobot-network-boundary makes core actions local and uses Sociobot only for billing endpoints', async ({ page }) => {
+  const origins = new Set<string>();
+  const urls: string[] = [];
+  page.on('request', (request) => { origins.add(new URL(request.url()).origin); urls.push(request.url()); });
+  await page.route('https://api.sociobot.in/api/v1/products/learning-objective-loop/verify?license=boundary-token', (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"valid":false,"reason":"invalid"}' }));
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Local billing boundary');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.goto('/?license=boundary-token#/data');
+  await expect(page.getByText(/license is no longer active/i)).toBeVisible();
+  expect([...origins]).toContain(new URL(page.url()).origin);
+  const sociobot = urls.filter((url) => new URL(url).origin === 'https://api.sociobot.in');
+  expect(sociobot).toEqual(['https://api.sociobot.in/api/v1/products/learning-objective-loop/verify?license=boundary-token']);
+  await expect(page.getByRole('link', { name: /Buy Study archive/ })).toHaveAttribute('href', 'https://api.sociobot.in/api/v1/products/learning-objective-loop/checkout');
+});
+
+test('@claim:encrypted-restore confirms replacement and protects records on cancel or wrong passphrase', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Backup source');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByRole('link', { name: 'Data & access' }).click();
+  await page.getByLabel('Backup passphrase').first().fill('correct-passphrase');
+  const downloaded = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download encrypted backup' }).click();
+  const backup = await downloaded;
+  const buffer = await readFile(await backup.path());
+  await page.getByRole('link', { name: 'Create objective' }).click();
+  await page.getByLabel('Objective *').fill('Sentinel record');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByRole('link', { name: 'Data & access' }).click();
+  const file = page.getByLabel('Encrypted backup file');
+  await file.setInputFiles({ name: 'backup.loop', mimeType: 'application/json', buffer });
+  await page.getByLabel('Backup passphrase').last().fill('wrong-passphrase');
+  await page.getByRole('button', { name: 'Decrypt and restore' }).click();
+  await expect(page.locator('form[data-form="import"] [role="alert"]')).toContainText('Could not decrypt');
+  await page.getByRole('link', { name: 'Objective map' }).click();
+  await expect(page.locator('.objective-tree')).toContainText('Sentinel record');
+  await page.getByRole('link', { name: 'Data & access' }).click();
+  await file.setInputFiles({ name: 'backup.loop', mimeType: 'application/json', buffer });
+  await page.getByLabel('Backup passphrase').last().fill('correct-passphrase');
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('button', { name: 'Decrypt and restore' }).click();
+  await page.getByRole('link', { name: 'Objective map' }).click();
+  await expect(page.locator('.objective-tree')).toContainText('Sentinel record');
+  await page.getByRole('link', { name: 'Data & access' }).click();
+  await file.setInputFiles({ name: 'backup.loop', mimeType: 'application/json', buffer });
+  await page.getByLabel('Backup passphrase').last().fill('correct-passphrase');
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Decrypt and restore' }).click();
+  await expect(page).toHaveURL(/\/today$/);
+  await page.getByRole('link', { name: 'Objective map' }).click();
+  await expect(page.locator('.objective-tree')).toContainText('Backup source');
+  await expect(page.locator('.objective-tree')).not.toContainText('Sentinel record');
+});
+
+test('@claim:passphrase-local-only keeps a backup passphrase out of requests and browser storage', async ({ page }) => {
+  const passphrase = 'local-only-passphrase';
+  const requests: string[] = [];
+  page.on('request', (request) => requests.push(request.url()));
+  await page.goto('/data');
+  await page.getByLabel('Backup passphrase').first().fill(passphrase);
+  const downloaded = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download encrypted backup' }).click();
+  await downloaded;
+  expect(requests.every((url) => new URL(url).origin === new URL(page.url()).origin)).toBeTruthy();
+  expect(await page.evaluate((secret) => Object.keys(localStorage).every((key) => !key.includes(secret)) && Object.values(localStorage).every((value) => !String(value).includes(secret)), passphrase)).toBeTruthy();
 });

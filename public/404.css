@@ -2,7 +2,9 @@
 * { box-sizing: border-box; }
 body { min-height: 100vh; margin: 0; color: var(--ink); background: var(--paper); background-image: radial-gradient(circle at center, color-mix(in srgb, var(--ink) 10%, transparent) 0 1px, transparent 1.2px); background-size: 12px 12px; font: 18px/1.55 Georgia, Charter, 'Times New Roman', serif; }
 header, footer { max-width: 1100px; margin: auto; padding: 24px; }
-header { border-bottom: 1px solid var(--rule); }
+header { border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+header nav { display: flex; gap: 16px; font: 800 .82rem/1 'Arial Narrow', Arial, sans-serif; }
+header nav a, footer a { color: var(--cobalt); text-underline-offset: 3px; }
 .wordmark { color: var(--ink); font: 700 1.25rem/1 'Arial Narrow', Arial, sans-serif; letter-spacing: .03em; text-decoration: none; text-transform: uppercase; }
 .wordmark span { color: var(--cobalt); font-size: 1.7rem; vertical-align: middle; }.wordmark b { color: var(--red); }
 main { width: min(100% - 32px, 760px); min-height: calc(100vh - 160px); margin: auto; padding: clamp(64px, 13vw, 144px) 0; }
@@ -10,5 +12,6 @@ h1 { max-width: 13ch; margin: 0 0 16px; font: 700 clamp(2.3rem, 7vw, 4.5rem)/1.0
 .kicker { color: var(--red); font: 800 .82rem/1 'Arial Narrow', Arial, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 .button { display: inline-flex; min-height: 44px; align-items: center; margin-top: 16px; padding: 10px 16px; border: 1px solid var(--red); background: var(--red); box-shadow: 4px 4px 0 var(--ink); color: #fff; font: 800 1rem/1 'Arial Narrow', Arial, sans-serif; text-decoration: none; }
 :focus-visible { outline: 3px solid var(--cobalt); outline-offset: 4px; }
-footer { border-top: 1px solid var(--rule); color: #526074; font: .85rem/1.4 'Arial Narrow', Arial, sans-serif; }
+footer { border-top: 1px solid var(--rule); color: #526074; font: .85rem/1.4 'Arial Narrow', Arial, sans-serif; display: flex; justify-content: space-between; gap: 16px; }
+@media (max-width: 560px) { header, footer { align-items: flex-start; flex-direction: column; } }
 @media (prefers-color-scheme: dark) { :root { color-scheme: dark; --paper: #111c33; --sheet: #182743; --ink: #f8f1d4; --cobalt: #77a8ff; --red: #ff866b; --rule: #40506b; } }

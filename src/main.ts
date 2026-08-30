@@ -9,7 +9,7 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 if (!app) throw new Error('App root is missing.');
 
 const slug = 'learning-objective-loop';
-const buildId = '1.0.1-repair-6';
+const buildId = '1.0.2-polish-1';
 const billingBase = import.meta.env.VITE_BILLING_API_BASE || 'https://api.sociobot.in/api/v1';
 const licenseKey = `sb_license:${slug}`;
 const verdictKey = `${licenseKey}:verdict`;
@@ -118,20 +118,21 @@ function shell(content: string): string {
         <span class="wordmark-title">Objective <span>Loop</span></span>
       </a>
       <div class="mast-actions">
-        <span class="connection ${offline ? 'is-offline' : ''}" role="status">${offline ? 'Offline · saved here' : 'Local · private'}</span>
+        <span class="connection ${offline ? 'is-offline' : ''}" role="status">${offline ? 'Offline · saved here' : 'Study data stays here'}</span>
         <button class="icon-button" data-action="theme" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span></button>
       </div>
     </header>
-    ${demoMode ? `<aside class="demo-banner" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved to your notebook.</strong><span><button class="text-button" type="button" data-action="reset-demo">Reset demo</button><button class="text-button" type="button" data-action="start-real">Start for real</button></span></aside>` : ''}
+    ${demoMode ? `<aside class="demo-banner" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved to your notebook.</strong><span><button class="text-button" type="button" data-action="reset-demo">Reset demo</button><button class="text-button" type="button" data-action="start-real">Open my notebook</button><small>Discards demo changes.</small></span></aside>` : ''}
     <div class="app-grid">
       <nav class="side-nav" aria-label="Main navigation">
         <div class="nav-primary">
           ${navItem('today', 'Review', duePrompts().length)}
           ${navItem('objectives', 'Objective map')}
           ${navItem('data', 'Data & access')}
+          <a class="nav-item" href="/demo"><span>Try sample data</span></a>
         </div>
-        <a class="button button-primary new-objective" href="${appHref('/new-objective')}"><span aria-hidden="true">＋</span> New objective</a>
-        <p class="nav-note">Nothing leaves this device unless you choose to export it.</p>
+        <a class="button button-primary new-objective" href="${appHref('/new-objective')}"><span aria-hidden="true">＋</span> Create objective</a>
+        <p class="nav-note">Study data stays on this device. See Privacy for license and link exceptions.</p>
       </nav>
       <main id="main" tabindex="-1">${content}</main>
       <div class="sr-only" id="route-announcer" aria-live="polite" aria-atomic="true"></div>
@@ -160,15 +161,20 @@ function pageHeader(kicker: string, title: string, copy: string, action = ''): s
 function emptyToday(): string {
   return `<section class="onboarding sheet">
     <div class="onboarding-copy">
-      <p class="kicker">Objective-aware study reviews</p>
       <h1>Plan reviews around your learning objectives</h1>
-      <p class="audience-copy">For self-learners who use AI or other materials and need recall prompts tied to goals they can explain.</p>
+      <p class="audience-copy">For self-learners using AI or other materials who need recall prompts tied to clear learning objectives.</p>
       <p>Start with one outcome you want to demonstrate. Add a short-answer prompt, then let each answer set the next review date.</p>
       <div class="onboarding-actions"><a class="button button-primary" href="/demo">Try it with sample data</a><span class="action-hint">Opens three sample objectives and their due prompts.</span><a class="button button-quiet" href="${appHref('/new-objective')}">Create your first objective</a></div>
-      <ul class="fact-lines"><li>Works offline after the first visit.</li><li>Study content stays in this browser.</li><li>Core notebook free; Study archive $19 once.</li></ul>
+      <ul class="fact-lines"><li>Works offline after the first visit.</li><li>Study content stays on this device.</li><li>Core reviews and exports are free. History reports cost $19 once.</li></ul>
       <ol class="steps"><li><span>01</span>State an objective</li><li><span>02</span>Write a recall prompt</li><li><span>03</span>Review with evidence</li></ol>
     </div>
     <picture><source media="(max-width: 720px)" srcset="/assets/objective-field-map-720.427b472e8f53.webp"><img src="/assets/objective-field-map.e409d0f7909f.webp" width="1200" height="800" alt="A screen-printed notebook diagram linking an objective tree to prompt slips and a review calendar." fetchpriority="high" decoding="async"></picture>
+  </section>
+  <section class="landing-sections" aria-label="How Objective Loop works">
+    <section class="landing-preview sheet" aria-labelledby="preview-heading"><div><h2 id="preview-heading">Sample review queue</h2><p>See the reason, interval, and date before you review.</p></div><div class="preview-row"><span class="stamp">DUE</span><div><strong>Why is it summer in Australia?</strong><p>New prompt — it has not been reviewed yet.</p></div><span>Review this prompt →</span></div></section>
+    <section aria-labelledby="how-heading"><h2 id="how-heading">How it works</h2><ol class="how-list"><li><strong>State an objective.</strong> Name what you want to demonstrate.</li><li><strong>Write a recall prompt.</strong> Add the answer you will check.</li><li><strong>Review and inspect.</strong> Log your result and see the next date.</li></ol></section>
+    <section aria-labelledby="privacy-heading"><h2 id="privacy-heading">What stays on this device</h2><p>Objectives, prompts, reviews, and backup passphrases stay in this browser. License checks contact Sociobot. Evidence links open only when you select them.</p></section>
+    <section class="landing-price" aria-labelledby="price-heading"><h2 id="price-heading">Study archive — $19 once</h2><p>Core reviews and CSV exports stay free. The one-time archive adds objective recall rates and printable weekly summaries.</p><a href="${appHref('/data')}">See data and access options</a></section>
   </section>`;
 }
 
@@ -177,7 +183,7 @@ function todayView(): string {
   const due = duePrompts();
   const upcoming = sortedPrompts().filter((prompt) => !isDue(prompt)).slice(0, 5);
   const reviewed = state.prompts.reduce((sum, prompt) => sum + prompt.reviews.length, 0);
-  return `${pageHeader('Review desk', due.length ? `${due.length} ${due.length === 1 ? 'prompt is' : 'prompts are'} due` : 'You are clear for today', due.length ? 'Each item below shows exactly why it entered the queue.' : 'No review is due. Add a prompt or inspect what is coming next.', due.length ? `<button class="button button-primary" data-review="${esc(due[0].id)}">Start review</button>` : '')}
+  return `${pageHeader('Due reviews', due.length ? `${due.length} ${due.length === 1 ? 'prompt is' : 'prompts are'} due` : 'You are clear for today', due.length ? 'Each item below shows exactly why it entered the queue.' : 'No review is due. Add a prompt or inspect what is coming next.', due.length ? `<button class="button button-primary" data-review="${esc(due[0].id)}">Start review</button>` : '')}
     <section class="metric-strip" aria-label="Learning summary">
       <div><strong>${state.objectives.filter((item) => !item.archived).length}</strong><span>active objectives</span></div>
       <div><strong>${state.prompts.length}</strong><span>recall prompts</span></div>
@@ -198,7 +204,7 @@ function promptRow(prompt: Prompt): string {
     <div class="date-block"><span>${isDue(prompt) ? 'DUE' : new Date(due).toLocaleDateString(undefined, { month: 'short' }).toUpperCase()}</span><strong>${isDue(prompt) ? 'NOW' : new Date(due).getDate()}</strong></div>
     <div class="prompt-main"><a href="${appHref(`/objectives/${encodeURIComponent(prompt.objectiveId)}`)}" class="objective-label">${esc(objective?.title || 'Missing objective')}</a><h3>${esc(prompt.question)}</h3><p><strong>Why now?</strong> ${esc(dueReason(prompt))}</p>
       <details><summary>Show calculation</summary><p>${prompt.reviews.length ? `Stage ${prompt.stage + 1} of ${7}; base interval ${[1, 3, 7, 14, 30, 60, 120][prompt.stage]} days.${prompt.manualDueAt ? ' A manual date currently replaces that calculated date.' : ''}` : 'New prompts enter the queue immediately at stage 1. Your answer determines the first interval.'}</p></details></div>
-    <button class="button ${isDue(prompt) ? 'button-primary' : 'button-quiet'}" data-review="${esc(prompt.id)}">Review<span class="sr-only"> ${esc(prompt.question)}</span></button>
+    <button class="button ${isDue(prompt) ? 'button-primary' : 'button-quiet'}" data-review="${esc(prompt.id)}">Review this prompt<span class="sr-only">: ${esc(prompt.question)}</span></button>
   </li>`;
 }
 
@@ -216,13 +222,13 @@ function objectiveTree(): string {
 
 function objectivesView(): string {
   const active = state.objectives.filter((item) => !item.archived);
-  return `${pageHeader('Objective map', active.length ? 'Your learning has a visible structure' : 'Map what you want to know', 'Objectives hold the evidence and recall prompts. Nest them when one outcome depends on another.', `<a class="button button-primary" href="${appHref('/new-objective')}">New objective</a>`)}
+  return `${pageHeader('Objective map', active.length ? 'Your learning objectives' : 'Map what you want to know', 'Objectives hold the evidence and recall prompts. Nest them when one outcome depends on another.', `<a class="button button-primary" href="${appHref('/new-objective')}">Create objective</a>`)}
     ${active.length ? `<section class="map-sheet sheet"><div class="map-legend"><span><i class="dot cobalt"></i>Objective</span><span><i class="dot red"></i>Due work</span></div>${objectiveTree()}</section>` : `<section class="blank-state"><div class="loop-glyph" aria-hidden="true">↻</div><h2>No objectives yet</h2><p>Begin with something observable: “Explain…”, “Solve…”, or “Compare…”.</p><a class="button button-primary" href="${appHref('/new-objective')}">Create an objective</a></section>`}`;
 }
 
 function newObjectiveView(): string {
   const parents = state.objectives.filter((item) => !item.archived);
-  return `${pageHeader('New field note', 'State the learning objective', 'Describe what you want to be able to demonstrate. You can refine it later.')}
+  return `${pageHeader('New objective', 'State the learning objective', 'Describe what you want to be able to demonstrate. You can refine it later.')}
     <form class="editor sheet" data-form="objective">
       <div class="field"><label for="objective-title">Objective <span aria-hidden="true">*</span></label><p class="hint" id="title-hint">Use an observable verb and keep it specific.</p><input id="objective-title" name="title" required maxlength="120" aria-describedby="title-hint" placeholder="Explain why seasons change"></div>
       <div class="field"><label for="objective-description">What counts as evidence?</label><textarea id="objective-description" name="description" rows="4" maxlength="500" placeholder="I can explain the axial tilt with a diagram, without notes."></textarea></div>
@@ -250,8 +256,8 @@ function objectiveDetail(id: string): string {
         </form></details>
       </section>
     </div><aside class="evidence-column">
-      <section aria-labelledby="evidence-heading"><div class="section-title"><h2 id="evidence-heading">Evidence shelf</h2><span>${objective.evidence.length} links</span></div>
-        ${objective.evidence.length ? `<ul class="evidence-list">${objective.evidence.map((item) => `<li><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.label)}</a><button class="text-button danger" data-delete-evidence="${esc(item.id)}" data-objective-id="${esc(id)}" aria-label="Remove evidence ${esc(item.label)}">Remove</button></li>`).join('')}</ul>` : '<p class="muted">Attach the source or work sample this objective comes from.</p>'}
+      <section aria-labelledby="evidence-heading"><div class="section-title"><h2 id="evidence-heading">Evidence links</h2><span>${objective.evidence.length} links</span></div>
+        ${objective.evidence.length ? `<ul class="evidence-list">${objective.evidence.map((item) => `<li><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">${esc(item.label)} <span class="sr-only">(opens external site)</span></a><button class="text-button danger" data-delete-evidence="${esc(item.id)}" data-objective-id="${esc(id)}" aria-label="Remove evidence ${esc(item.label)}">Remove</button></li>`).join('')}</ul>` : '<p class="muted">Attach the source or work sample this objective comes from.</p>'}
         <form class="mini-form" data-form="evidence" data-objective-id="${esc(id)}"><div class="field"><label for="evidence-label">Link label</label><input id="evidence-label" name="label" required maxlength="100" placeholder="Chapter 4 notes"></div><div class="field"><label for="evidence-url">Web address</label><input id="evidence-url" name="url" type="url" inputmode="url" required placeholder="https://…"></div><button class="button button-quiet" type="submit">Attach evidence</button><p class="form-error" role="alert"></p></form>
       </section>
       ${children.length ? `<section><h2>Sub-objectives</h2><ul class="link-list">${children.map((child) => `<li><a href="${appHref(`/objectives/${encodeURIComponent(child.id)}`)}">${esc(child.title)} →</a></li>`).join('')}</ul></section>` : ''}
@@ -260,7 +266,7 @@ function objectiveDetail(id: string): string {
 }
 
 function editablePrompt(prompt: Prompt): string {
-  return `<li class="prompt-card"><div class="prompt-card-head"><div><p class="kicker">${prompt.manualDueAt ? 'Manual date' : `Stage ${prompt.stage + 1}`}</p><h3>${esc(prompt.question)}</h3><p>Due ${esc(formatDate(effectiveDueAt(prompt)))} · ${prompt.reviews.length} reviews</p></div><button class="button ${isDue(prompt) ? 'button-primary' : 'button-quiet'}" data-review="${esc(prompt.id)}">Review</button></div>
+  return `<li class="prompt-card"><div class="prompt-card-head"><div><p class="kicker">${prompt.manualDueAt ? 'Manual date' : `Stage ${prompt.stage + 1}`}</p><h3>${esc(prompt.question)}</h3><p>Due ${esc(formatDate(effectiveDueAt(prompt)))} · ${prompt.reviews.length} reviews</p></div><button class="button ${isDue(prompt) ? 'button-primary' : 'button-quiet'}" data-review="${esc(prompt.id)}">Review this prompt</button></div>
     <details><summary>Answer, schedule & editing</summary><div class="answer-note"><strong>Expected answer</strong><p>${esc(prompt.answer)}</p></div>
       <form class="inline-schedule" data-form="schedule" data-prompt-id="${esc(prompt.id)}"><div class="field"><label for="date-${esc(prompt.id)}">Override next review</label><input id="date-${esc(prompt.id)}" type="date" name="dueDate" value="${esc(localDateValue(effectiveDueAt(prompt)))}"></div><button class="button button-quiet" type="submit">Set date</button>${prompt.manualDueAt ? `<button class="text-button" type="button" data-clear-override="${esc(prompt.id)}">Use calculated date</button>` : ''}</form>
       ${prompt.reviews.length ? `<div class="review-history"><strong>Recent evidence</strong><ul>${[...prompt.reviews].reverse().slice(0, 5).map((review) => `<li><span>${esc(formatDate(review.at))}</span><span>${review.correct ? 'Correct' : 'Not yet'} · confidence ${review.confidence}/5</span><span>${review.intervalDays}-day next step</span></li>`).join('')}</ul></div>` : ''}
@@ -269,25 +275,31 @@ function editablePrompt(prompt: Prompt): string {
 }
 
 function premiumInsights(): string {
-  if (!isPremium) return `<section class="premium-panel"><div><p class="kicker">Study archive · paid unlock</p><h2>See patterns across your review history</h2><p>Unlock objective-level recall rates and printable weekly summaries for a one-time $19 purchase. All core objectives, prompts, reviews, manual dates, and encrypted exports remain free.</p><a class="button button-primary" href="${billingBase}/products/${slug}/checkout">Buy once · $19</a></div><div class="halftone-seal" aria-hidden="true">19</div></section>`;
+  if (!isPremium) return `<section class="premium-panel"><div><p class="kicker">Study archive · paid unlock</p><h2>See patterns across your review history</h2><p>Unlock objective-level recall rates and printable weekly summaries for a one-time $19 purchase. All core objectives, prompts, reviews, manual dates, and encrypted exports remain free.</p><a class="button button-primary" href="${billingBase}/products/${slug}/checkout">Buy Study archive · $19 <span class="sr-only">at Sociobot (opens external checkout)</span></a></div><div class="halftone-seal" aria-hidden="true">19</div></section>`;
   const reviews = state.prompts.flatMap((prompt) => prompt.reviews);
   const correct = reviews.filter((review) => review.correct).length;
   const rate = reviews.length ? Math.round((correct / reviews.length) * 100) : 0;
-  return `<section class="premium-panel is-unlocked"><div><p class="kicker">Study archive · unlocked</p><h2>${rate}% recall across ${reviews.length} reviews</h2><p>${reviews.length ? 'Your full review history is available on this device.' : 'Complete a review to begin your history summary.'}</p><button class="button button-quiet" data-action="print">Print weekly summary</button></div><div class="halftone-seal" aria-hidden="true">✓</div></section>`;
+  const byObjective = state.objectives.map((objective) => {
+    const objectiveReviews = state.prompts.filter((prompt) => prompt.objectiveId === objective.id).flatMap((prompt) => prompt.reviews);
+    const objectiveCorrect = objectiveReviews.filter((review) => review.correct).length;
+    const objectiveRate = objectiveReviews.length ? Math.round((objectiveCorrect / objectiveReviews.length) * 100) : 0;
+    return `<li><strong>${esc(objective.title)}</strong><span>${objectiveRate}% recall · ${objectiveReviews.length} reviews</span></li>`;
+  }).join('');
+  return `<section class="premium-panel is-unlocked"><div><p class="kicker">Study archive · unlocked</p><h2>${rate}% recall across ${reviews.length} reviews</h2><p>${reviews.length ? 'Your full review history is available on this device.' : 'Complete a review to begin your history summary.'}</p><ul class="recall-rates" aria-label="Recall rate by objective">${byObjective || '<li>No objective reviews yet.</li>'}</ul><button class="button button-quiet" data-action="print">Print weekly summary</button></div><div class="halftone-seal" aria-hidden="true">✓</div></section>`;
 }
 
 function dataView(): string {
-  return `${pageHeader('Data & access', 'Your learning record belongs to you', 'Exports happen entirely in this browser. Encrypted backups use your passphrase; we never receive it.')}
+  return `${pageHeader('Data & access', 'Export, restore, or unlock reports', 'Exports happen entirely in this browser. Your passphrase is used only here and is not saved.')}
     ${premiumInsights()}
-    <div class="data-grid"><section class="sheet"><h2>Encrypted backup</h2><p>Download objectives, evidence links, prompts, schedules, and review history protected with AES-256-GCM.</p><form data-form="export"><div class="field"><label for="export-passphrase">Backup passphrase</label><input id="export-passphrase" name="passphrase" type="password" minlength="8" required autocomplete="new-password" aria-describedby="export-hint"><p class="hint" id="export-hint">At least 8 characters. It cannot be recovered.</p></div><button class="button button-primary" type="submit">Download encrypted backup</button><button class="button button-quiet" type="button" data-action="csv">Export readable CSV</button><p class="form-error" role="alert"></p></form></section>
+    <div class="data-grid"><section class="sheet"><h2>Encrypted backup</h2><p>Download a password-protected backup and a readable CSV. Technical details: PBKDF2-SHA256 with 250,000 iterations and AES-256-GCM.</p><form data-form="export"><div class="field"><label for="export-passphrase">Backup passphrase</label><input id="export-passphrase" name="passphrase" type="password" minlength="8" required autocomplete="new-password" aria-describedby="export-hint"><p class="hint" id="export-hint">At least 8 characters. It is used only in this browser and is not saved.</p></div><button class="button button-primary" type="submit">Download encrypted backup</button><button class="button button-quiet" type="button" data-action="csv">Export readable CSV</button><p class="form-error" role="alert"></p></form></section>
       <section class="sheet"><h2>Restore a backup</h2><p>Import replaces the current record after confirmation. Make a backup first if needed.</p><form data-form="import"><div class="field"><label for="import-file">Encrypted backup file</label><input id="import-file" name="file" type="file" accept=".loop,.json,application/json" required></div><div class="field"><label for="import-passphrase">Backup passphrase</label><input id="import-passphrase" name="passphrase" type="password" required autocomplete="current-password"></div><button class="button button-quiet" type="submit">Decrypt and restore</button><p class="form-error" role="alert"></p></form></section>
     </div>
     <section class="license-box"><div><p class="kicker">Purchase access</p><h2>${isPremium ? 'Study archive is active' : 'Restore a Study archive license'}</h2><p>${esc(licenseNotice || (isPremium ? 'This device has a verified license.' : 'Paste the license token from your receipt to unlock this device.'))}</p></div><form data-form="license"><label for="license-token">License token</label><div class="joined"><input id="license-token" name="token" required autocomplete="off" spellcheck="false"><button class="button button-quiet" type="submit">Verify license</button></div><p class="form-error" role="alert"></p></form></section>`;
 }
 
 function legalView(kind: 'privacy' | 'terms'): string {
-  if (kind === 'privacy') return `<article class="legal"><p class="kicker">Effective August 27, 2026</p><h1>Privacy</h1><p><strong>Your study data stays in your browser.</strong> Objective Loop stores objectives, prompts, evidence links, review history, and preferences in IndexedDB and local storage on this device.</p><h2>What is sent over the network</h2><p>The core app sends no study data, analytics, or tracking events. If you buy or verify a Study archive license, your browser contacts Sociobot’s billing API with the license token. Checkout is hosted by Sociobot/Dodo, the merchant of record, and their policies apply there.</p><h2>Exports and deletion</h2><p>Encrypted backups are created locally with the passphrase you choose. We cannot recover it. You may remove individual records in the app or clear this site’s storage in your browser.</p><h2>Contact</h2><p>Questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p><p><a href="${appHref('/today')}">← Return to Objective Loop</a></p></article>`;
-  return `<article class="legal"><p class="kicker">Effective August 27, 2026</p><h1>Terms</h1><p>Objective Loop is a local-first study utility provided as-is. You are responsible for your learning content, backup passphrase, and exported files.</p><h2>Study archive purchase</h2><p>Study archive is a one-time $19 license that unlocks history insights and printable summaries. Core objectives, prompts, review scheduling, manual overrides, and data export remain available without purchase. Sociobot/Dodo is the merchant of record. Refunds are handled by the merchant and revoke the related license.</p><h2>Acceptable use</h2><p>Do not misuse the service or billing endpoints, interfere with their operation, or use the product in violation of applicable law.</p><h2>Warranty</h2><p>The scheduling tool is an aid, not a guarantee of learning outcomes. To the extent permitted by law, it is provided without warranties.</p><p><a href="${appHref('/today')}">← Return to Objective Loop</a></p></article>`;
+  if (kind === 'privacy') return `<article class="legal"><p class="kicker">Effective August 30, 2026</p><h1>Privacy</h1><p><strong>Study content stays on this device.</strong> Study records use IndexedDB, with localStorage only if IndexedDB is unavailable. Theme and license settings use localStorage.</p><h2>What is sent over the network</h2><p>Core study actions send no study data, analytics, or tracking events. License purchase and verification contact Sociobot. An evidence link opens its site only when you select it.</p><h2>Exports and deletion</h2><p>Backups are created locally. The passphrase is used only in this browser and is not saved. You may remove records in the app or clear this site’s storage.</p><h2>Contact</h2><p>Questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p><p><a href="${appHref('/today')}">← Return to Objective Loop</a></p></article>`;
+  return `<article class="legal"><p class="kicker">Effective August 30, 2026</p><h1>Terms</h1><p>Objective Loop is a study utility provided as-is. You are responsible for your learning content, backup passphrase, and exported files.</p><h2>Study archive purchase</h2><p>Study archive is a one-time $19 license for recall rates and printable summaries. Core objectives, prompts, review scheduling, manual dates, and exports remain free. Sociobot/Dodo is the merchant of record.</p><h2>Acceptable use</h2><p>Do not misuse the service or billing endpoints or interfere with their operation.</p><h2>Warranty</h2><p>The schedule is an aid, not a guarantee of learning outcomes. To the extent permitted by law, it is provided without warranties.</p><p><a href="${appHref('/today')}">← Return to Objective Loop</a></p></article>`;
 }
 
 function notFound(): string {
@@ -327,7 +339,7 @@ function setPageMetadata(metadata: PageMetadata): void {
 function render(options: RenderOptions = {}): void {
   const path = route();
   let content: string;
-  let metadata: PageMetadata = { title: 'Objective Loop — explainable learning reviews', description: 'Plan recall reviews around learning objectives with an inspectable schedule.' };
+  let metadata: PageMetadata = { title: 'Objective Loop — plan learning reviews', description: 'Plan recall reviews around learning objectives with an inspectable schedule.' };
   if (loading) {
     content = `<section class="loading-state" aria-live="polite"><span class="loader" aria-hidden="true"></span><h1>Opening your notebook</h1></section>`;
     metadata = { title: 'Opening notebook — Objective Loop', description: 'Opening your local Objective Loop notebook.' };
@@ -343,6 +355,7 @@ function render(options: RenderOptions = {}): void {
   } else if (path === '/' || path === '/today') {
     content = todayView();
     if (location.pathname === '/demo') metadata = { title: 'Demo — Objective Loop', description: 'Try Objective Loop with sample learning objectives and due review prompts.' };
+    else if (path === '/today') metadata = { title: 'Review queue — Objective Loop', description: 'Review due recall prompts and inspect each next review date.' };
   } else if (path === '/objectives') {
     content = objectivesView();
     metadata = { title: 'Objectives — Objective Loop', description: 'Map learning objectives, evidence, and recall prompts in Objective Loop.' };
@@ -356,7 +369,7 @@ function render(options: RenderOptions = {}): void {
     const objective = state.objectives.find((item) => item.id === selectedObjectiveId());
     content = objectiveDetail(selectedObjectiveId()!);
     metadata = objective
-      ? { title: 'Objective — Objective Loop', description: `Recall prompts and evidence for the learning objective: ${objective.title.slice(0, 100)}.` }
+      ? { title: `${objective.title.slice(0, 34)} — Objective Loop`, description: `Recall prompts and evidence for the learning objective: ${objective.title.slice(0, 100)}.` }
       : { title: 'Objective not found — Objective Loop', description: 'The requested Objective Loop learning objective was not found.' };
   } else {
     content = notFound();

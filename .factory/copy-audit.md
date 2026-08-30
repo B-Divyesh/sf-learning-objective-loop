@@ -1,35 +1,25 @@
-# First-screen copy audit
+# Copy audit — polish 1
 
-Audited 2026-08-30. Word counts treat hyphenated terms as one word. No line
-contains a banned marketing word, and no sentence exceeds 22 words.
+Audited 2026-08-30. Word counts treat hyphenated terms and URLs as one word.
+No reviewed sentence exceeds 22 words or uses a banned marketing word.
 
 | Copy | Words | Role |
 | --- | ---: | --- |
-| Objective Loop | 2 | Product name |
-| Local · private | 2 | Connection and privacy state |
-| Review | 1 | Navigation |
-| Objective map | 2 | Navigation |
-| Data & access | 3 | Navigation |
-| New objective | 2 | Action |
-| Nothing leaves this device unless you choose to export it. | 10 | Privacy fact |
-| Objective-aware study reviews | 3 | Section label |
-| Plan reviews around your learning objectives | 6 | Job headline |
-| For self-learners who use AI or other materials and need recall prompts tied to goals they can explain. | 18 | Audience and situation |
-| Start with one outcome you want to demonstrate. | 9 | First-use guidance |
-| Add a short-answer prompt, then let each answer set the next review date. | 12 | First-use guidance |
-| State an objective | 3 | Step |
-| Write a recall prompt | 4 | Step |
-| Review with evidence | 3 | Step |
-| Try it with sample data | 5 | Primary action |
-| Opens three sample objectives and their due prompts. | 8 | Primary-action result |
-| Create your first objective | 4 | Real-data action |
-| Works offline after the first visit. | 6 | Offline fact |
-| Study content stays in this browser. | 6 | Privacy fact |
-| Core notebook free; Study archive $19 once. | 7 | Price fact |
-| Original AI-generated field-guide artwork. | 4 | Asset disclosure |
-| Built by Param Factory | 4 | Footer provenance |
-| Privacy | 1 | Legal link |
-| Terms | 1 | Legal link |
+| Plan reviews around your learning objectives | 6 | Landing headline |
+| For self-learners using AI or other materials who need recall prompts tied to clear learning objectives. | 15 | Audience and situation |
+| Opens three sample objectives and their due prompts. | 8 | Demo result |
+| Works offline after the first visit. | 6 | Plain fact |
+| Study content stays on this device. | 6 | Privacy fact |
+| Core reviews and exports are free. History reports cost $19 once. | 10 | Price fact |
+| See the reason, interval, and date before you review. | 10 | Preview |
+| State an objective. Name what you want to demonstrate. | 9 | How it works |
+| Write a recall prompt. Add the answer you will check. | 10 | How it works |
+| Review and inspect. Log your result and see the next date. | 11 | How it works |
+| Objectives, prompts, reviews, and backup passphrases stay in this browser. | 10 | Privacy boundary |
+| License checks contact Sociobot. | 4 | Privacy exception |
+| Evidence links open only when you select them. | 8 | Privacy exception |
+| Core reviews and CSV exports stay free. | 7 | Price boundary |
+| The one-time archive adds objective recall rates and printable weekly summaries. | 11 | Paid output |
 
 ## Terminology
 
@@ -38,8 +28,8 @@ contains a banned marketing word, and no sentence exceeds 22 words.
 | Desired learning outcome | objective |
 | Question tied to an objective | prompt |
 | Answer attempt and grade | review |
-| Supporting source or work sample | evidence |
-| Next-review list | queue |
+| Supporting source or work sample | evidence link |
+| Next-review list | review queue |
 | User-selected next date | manual date |
 | Isolated sample workspace | demo |
 | Paid history feature | Study archive |

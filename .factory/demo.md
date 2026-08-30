@@ -1,15 +1,18 @@
 # Objective Loop demo sandbox
 
 - Demo URL: `/demo`.
-- First-use action: **Try it with sample data** opens the demo in one click.
+- First-use action: **Try it with sample data** opens the demo in one click. The
+  persistent navigation also offers **Try sample data** when a real notebook is
+  already populated.
 - Sample: three learning objectives, three short-answer prompts, one evidence
   link, one prior review, two due prompts, and one upcoming prompt.
 - Storage: IndexedDB database `objective-loop-demo`, with
   `demo:objective-loop:state` as its failure fallback. Real data remains in
   `objective-loop` / `objective-loop:state` and is never read in demo mode.
 - **Reset demo** replaces demo changes with the original sample.
-- **Start for real** deletes the demo namespace before returning to the real
-  empty or existing notebook.
+- **Open my notebook** deletes the demo namespace before returning to the real
+  empty or existing notebook. Its nearby note says that demo changes are
+  discarded.
 
 Older `?demo=1#/today` links redirect to `/demo` before the notebook opens.
 

@@ -1,21 +1,23 @@
 # Objective Loop
 
-Objective Loop is a private, offline-first review notebook for self-learners. It keeps recall prompts attached to explicit learning objectives and explains every due date. It does not generate cards, ingest course content, or hide scheduling behind a recommendation model.
+Objective Loop is a private review notebook for self-learners. It works without internet after the first visit. It keeps hand-written recall prompts tied to learning objectives and explains every due date.
 
 Live product: <https://learning-objective-loop.sociobot.in>
 
-Try the isolated sample notebook: <https://learning-objective-loop.sociobot.in/demo>. Use **Reset demo** to restore the sample or **Start for real** to discard it and return to your own notebook. Older `?demo=1#/today` links redirect to `/demo`.
+Try the isolated sample notebook: <https://learning-objective-loop.sociobot.in/demo>. Use **Reset demo** to restore the sample. Use **Open my notebook** to discard demo changes and return to your notebook. Older `?demo=1#/today` links redirect to `/demo`.
 
 ## What it does
 
 - Builds nested learning objectives with evidence links.
 - Attaches hand-written short-answer prompts to each objective.
 - Logs correctness and 1–5 confidence after the expected answer is revealed.
-- Schedules transparent 1, 3, 7, 14, 30, 60, and 120-day review steps.
-- Allows visible manual due-date overrides.
-- Stores everything in IndexedDB and works after an offline reload.
-- Exports encrypted `.loop` backups (PBKDF2 + AES-256-GCM) and readable CSV.
-- Offers an optional $19 one-time Study archive license through Sociobot billing; all core study and export features remain free.
+- Schedules the disclosed 1, 3, 7, 14, 30, 60, and 120-day steps.
+- Allows visible manual review-date overrides.
+- Uses IndexedDB for study records, with localStorage as a fallback.
+- Exports password-protected `.loop` backups and readable CSV.
+- Offers a one-time $19 Study archive license for recall rates and printable weekly summaries.
+
+You write each prompt. Objective Loop does not import course content or choose dates with a hidden model.
 
 ## Run locally
 
@@ -26,7 +28,7 @@ npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite. No environment variables are needed for the core app. To point license checks at staging, set `VITE_BILLING_API_BASE=https://pilot-api.sociobot.in/api/v1` before building.
+Open the URL printed by Vite. No environment variables are needed for the core app. To test license checks against Sociobot’s test server, set `VITE_BILLING_API_BASE=https://pilot-api.sociobot.in/api/v1` before building.
 
 ## Test and build
 
@@ -39,14 +41,13 @@ npm run verify:live
 npm run test:live
 ```
 
-The exact production build command is `npm run build`; deploy the generated `dist/` directory. Playwright 1.58.2 is pinned for the browser tests.
-Tested product claims and their exact commands are listed in `.factory/claims.json`.
+The production build command is `npm run build`; deploy `dist/`. Playwright 1.58.2 is pinned for browser tests. Claims and their exact commands are listed in `.factory/claims.json`.
 
 ## Data and privacy
 
-Study content remains on the device. There are no analytics, ads, third-party fonts, or runtime scripts. Only license purchase/verification contacts Sociobot. See `/privacy` and `/terms` in the app.
+Study content stays on this device. The core app has no analytics, ads, third-party fonts, or third-party JavaScript. License purchase and verification contact Sociobot. Evidence links open their site only when you select them. See `/privacy` and `/terms` in the app.
 
-The researched scope is recorded in `.factory/brief.json`, the original visual system and image provenance in `.factory/design.md`, the demo isolation in `.factory/demo.md`, and release verification in `.factory/handoff.md`.
+See `.factory/brief.json` for scope and `.factory/design.md` for the visual system and image sources. See `.factory/demo.md` for demo isolation. See `.factory/handoff.md` for release checks.
 
 ## License
 
