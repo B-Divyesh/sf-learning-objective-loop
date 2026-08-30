@@ -138,6 +138,9 @@ test('closes a review with Escape, keeps it closed on navigation, and restores f
   const trigger = page.getByRole('button', { name: 'Review', exact: true });
   await trigger.click();
   await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Close review' })).toBeFocused();
+  const dialogResults = await new AxeBuilder({ page: page as never }).include('#review-dialog').withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(dialogResults.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(trigger).toBeFocused();
