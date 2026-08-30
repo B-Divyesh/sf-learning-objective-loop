@@ -9,7 +9,7 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 if (!app) throw new Error('App root is missing.');
 
 const slug = 'learning-objective-loop';
-const buildId = '1.0.2-polish-1';
+const buildId = '1.0.3-polish-2';
 const billingBase = import.meta.env.VITE_BILLING_API_BASE || 'https://api.sociobot.in/api/v1';
 const licenseKey = `sb_license:${slug}`;
 const verdictKey = `${licenseKey}:verdict`;
@@ -165,7 +165,7 @@ function emptyToday(): string {
       <p class="audience-copy">For self-learners using AI or other materials who need recall prompts tied to clear learning objectives.</p>
       <p>Start with one outcome you want to demonstrate. Add a short-answer prompt, then let each answer set the next review date.</p>
       <div class="onboarding-actions"><a class="button button-primary" href="/demo">Try it with sample data</a><span class="action-hint">Opens three sample objectives and their due prompts.</span><a class="button button-quiet" href="${appHref('/new-objective')}">Create your first objective</a></div>
-      <ul class="fact-lines"><li>Works offline after the first visit.</li><li>Study content stays on this device.</li><li>Core reviews and exports are free. History reports cost $19 once.</li></ul>
+      <ul class="fact-lines"><li>Works offline after the first visit.</li><li>Study content stays on this device.</li><li>Core reviews, CSV, and backups are free. History reports cost $19 once.</li></ul>
       <ol class="steps"><li><span>01</span>State an objective</li><li><span>02</span>Write a recall prompt</li><li><span>03</span>Review with evidence</li></ol>
     </div>
     <picture><source media="(max-width: 720px)" srcset="/assets/objective-field-map-720.427b472e8f53.webp"><img src="/assets/objective-field-map.e409d0f7909f.webp" width="1200" height="800" alt="A screen-printed notebook diagram linking an objective tree to prompt slips and a review calendar." fetchpriority="high" decoding="async"></picture>
@@ -174,7 +174,7 @@ function emptyToday(): string {
     <section class="landing-preview sheet" aria-labelledby="preview-heading"><div><h2 id="preview-heading">Sample review queue</h2><p>See the reason, interval, and date before you review.</p></div><div class="preview-row"><span class="stamp">DUE</span><div><strong>Why is it summer in Australia?</strong><p>New prompt — it has not been reviewed yet.</p></div><span>Review this prompt →</span></div></section>
     <section aria-labelledby="how-heading"><h2 id="how-heading">How it works</h2><ol class="how-list"><li><strong>State an objective.</strong> Name what you want to demonstrate.</li><li><strong>Write a recall prompt.</strong> Add the answer you will check.</li><li><strong>Review and inspect.</strong> Log your result and see the next date.</li></ol></section>
     <section aria-labelledby="privacy-heading"><h2 id="privacy-heading">What stays on this device</h2><p>Objectives, prompts, reviews, and backup passphrases stay in this browser. License checks contact Sociobot. Evidence links open only when you select them.</p></section>
-    <section class="landing-price" aria-labelledby="price-heading"><h2 id="price-heading">Study archive — $19 once</h2><p>Core reviews and CSV exports stay free. The one-time archive adds objective recall rates and printable weekly summaries.</p><a href="${appHref('/data')}">See data and access options</a></section>
+    <section class="landing-price" aria-labelledby="price-heading"><h2 id="price-heading">Study archive — $19 once</h2><p>Core reviews, CSV, and backups stay free. The one-time archive adds objective recall rates and printable weekly summaries.</p><a href="${appHref('/data')}">See data and access options</a></section>
   </section>`;
 }
 
@@ -222,7 +222,7 @@ function objectiveTree(): string {
 
 function objectivesView(): string {
   const active = state.objectives.filter((item) => !item.archived);
-  return `${pageHeader('Objective map', active.length ? 'Your learning objectives' : 'Map what you want to know', 'Objectives hold the evidence and recall prompts. Nest them when one outcome depends on another.', `<a class="button button-primary" href="${appHref('/new-objective')}">Create objective</a>`)}
+  return `${pageHeader('Objective map', 'Your learning objectives', 'Objectives hold the evidence and recall prompts. Nest them when one outcome depends on another.', `<a class="button button-primary" href="${appHref('/new-objective')}">Create objective</a>`)}
     ${active.length ? `<section class="map-sheet sheet"><div class="map-legend"><span><i class="dot cobalt"></i>Objective</span><span><i class="dot red"></i>Due work</span></div>${objectiveTree()}</section>` : `<section class="blank-state"><div class="loop-glyph" aria-hidden="true">↻</div><h2>No objectives yet</h2><p>Begin with something observable: “Explain…”, “Solve…”, or “Compare…”.</p><a class="button button-primary" href="${appHref('/new-objective')}">Create an objective</a></section>`}`;
 }
 
@@ -303,7 +303,7 @@ function legalView(kind: 'privacy' | 'terms'): string {
 }
 
 function notFound(): string {
-  return `<section class="blank-state"><div class="loop-glyph" aria-hidden="true">?</div><h1>That page is not in this notebook</h1><p>The objective may have been removed.</p><a class="button button-primary" href="${appHref('/today')}">Go to review desk</a></section>`;
+  return `<section class="blank-state"><div class="loop-glyph" aria-hidden="true">?</div><h1>Page not found</h1><p>The objective may have been removed.</p><a class="button button-primary" href="${appHref('/today')}">Go to reviews</a></section>`;
 }
 
 function reviewDialog(): string {
@@ -421,9 +421,19 @@ function closeReview(): void {
 }
 
 async function persist(message?: string): Promise<void> {
-  await saveState(state, storageScope);
-  if (message) showToast(message);
-  render();
+  // Prevent a second form from being edited against markup that an earlier
+  // save is about to replace. The browser stays responsive, but it cannot
+  // accept another notebook action until this durable write finishes.
+  app.inert = true;
+  app.setAttribute('aria-busy', 'true');
+  try {
+    await saveState(state, storageScope);
+    if (message) showToast(message);
+    render();
+  } finally {
+    app.inert = false;
+    app.removeAttribute('aria-busy');
+  }
 }
 
 async function resetDemo(): Promise<void> {

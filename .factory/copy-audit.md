@@ -1,24 +1,32 @@
-# Copy audit — polish 1
+# Copy audit — polish 2
 
-Audited 2026-08-30. Word counts treat hyphenated terms and URLs as one word.
-No reviewed sentence exceeds 22 words or uses a banned marketing word.
+Audited 2026-08-30. Word counts treat hyphenated terms, `$19`, and URLs as one
+word. Every landing sentence is 22 words or fewer and uses no banned marketing
+language.
 
 | Copy | Words | Role |
 | --- | ---: | --- |
 | Plan reviews around your learning objectives | 6 | Landing headline |
 | For self-learners using AI or other materials who need recall prompts tied to clear learning objectives. | 15 | Audience and situation |
+| Start with one outcome you want to demonstrate. | 8 | First step |
+| Add a short-answer prompt, then let each answer set the next review date. | 13 | First step |
 | Opens three sample objectives and their due prompts. | 8 | Demo result |
 | Works offline after the first visit. | 6 | Plain fact |
 | Study content stays on this device. | 6 | Privacy fact |
-| Core reviews and exports are free. History reports cost $19 once. | 10 | Price fact |
-| See the reason, interval, and date before you review. | 10 | Preview |
-| State an objective. Name what you want to demonstrate. | 9 | How it works |
-| Write a recall prompt. Add the answer you will check. | 10 | How it works |
-| Review and inspect. Log your result and see the next date. | 11 | How it works |
+| Core reviews, CSV, and backups are free. | 7 | Price fact |
+| History reports cost $19 once. | 6 | Price fact |
+| See the reason, interval, and date before you review. | 10 | Sample preview |
+| New prompt — it has not been reviewed yet. | 8 | Sample status |
+| State an objective. | 3 | How it works |
+| Name what you want to demonstrate. | 6 | How it works |
+| Write a recall prompt. | 4 | How it works |
+| Add the answer you will check. | 6 | How it works |
+| Review and inspect. | 3 | How it works |
+| Log your result and see the next date. | 8 | How it works |
 | Objectives, prompts, reviews, and backup passphrases stay in this browser. | 10 | Privacy boundary |
 | License checks contact Sociobot. | 4 | Privacy exception |
 | Evidence links open only when you select them. | 8 | Privacy exception |
-| Core reviews and CSV exports stay free. | 7 | Price boundary |
+| Core reviews, CSV, and backups stay free. | 7 | Paid boundary |
 | The one-time archive adds objective recall rates and printable weekly summaries. | 11 | Paid output |
 
 ## Terminology

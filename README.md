@@ -15,7 +15,7 @@ Try the isolated sample notebook: <https://learning-objective-loop.sociobot.in/d
 - Allows visible manual review-date overrides.
 - Uses IndexedDB for study records, with localStorage as a fallback.
 - Exports password-protected `.loop` backups and readable CSV.
-- Offers a one-time $19 Study archive license for recall rates and printable weekly summaries.
+- Keeps reviews, CSV export, and encrypted backup export free. A one-time $19 Study archive license adds recall rates and printable weekly summaries.
 
 You write each prompt. Objective Loop does not import course content or choose dates with a hidden model.
 

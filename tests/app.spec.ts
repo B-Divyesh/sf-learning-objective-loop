@@ -41,6 +41,8 @@ test('uses real routes with route titles, focus, and an announcement after keybo
   await expect(page.getByRole('heading', { name: 'Terms', level: 1 })).toHaveCount(1);
   await page.goto('/today');
   await expect(page).toHaveTitle('Review queue — Objective Loop');
+  await page.goto('/objectives');
+  await expect(page.getByRole('heading', { name: 'Your learning objectives', level: 1 })).toBeVisible();
   await page.goto('/demo');
   await page.getByRole('link', { name: /Explain why seasons differ by hemisphere/ }).click();
   await expect(page).toHaveTitle('Explain why seasons differ by hemi — Objective Loop');
@@ -53,9 +55,9 @@ test('ships social metadata, a Param Factory footer, and a designed static 404',
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Objective Loop/);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /objective-loop-social\.webp$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-  await expect(page.getByText(/Built by Param Factory · build 1\.0\.2-polish-1/)).toBeVisible();
+  await expect(page.getByText(/Built by Param Factory · build 1\.0\.3-polish-2/)).toBeVisible();
   await page.goto('/404.html');
-  await expect(page.getByRole('heading', { name: 'This page is not in the notebook', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Page not found', level: 1 })).toBeVisible();
   await expect(page).toHaveTitle('Page not found — Objective Loop');
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /requested Objective Loop page/i);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /404\.html$/);
@@ -307,8 +309,9 @@ test('@claim:manual-override persists a visible manual date and restores the cal
   await expect(page.getByText('Stage 1', { exact: true })).toBeVisible();
 });
 
-test('@claim:one-time-price hands the $19 purchase through a 303 checkout handoff and keeps export free', async ({ page }) => {
+test('@claim:one-time-price keeps reviews and both exports free before and after the $19 checkout handoff', async ({ page }) => {
   const checkout = 'https://api.sociobot.in/api/v1/products/learning-objective-loop/checkout';
+  const verification = 'https://api.sociobot.in/api/v1/products/learning-objective-loop/verify?license=price-license-token';
   let checkoutRequests = 0;
   const fixture = createServer((request, response) => {
     expect(request.url).toBe('/hosted-checkout');
@@ -321,7 +324,28 @@ test('@claim:one-time-price hands the $19 purchase through a 303 checkout handof
   const hostedCheckout = `http://127.0.0.1:${address.port}/hosted-checkout`;
 
   try {
-    await page.goto('/#/data');
+    await page.route(verification, (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"valid":true,"reason":"ok"}' }));
+    await page.goto('/');
+    await page.getByRole('link', { name: 'Create your first objective' }).click();
+    await page.getByLabel('Objective *').fill('Check free study actions');
+    await page.getByRole('button', { name: 'Save objective' }).click();
+    await page.getByLabel('Question *').fill('Which study actions remain free?');
+    await page.getByLabel('Expected answer *').fill('Reviews, CSV export, and encrypted backup export.');
+    await page.getByRole('button', { name: 'Add to review queue' }).click();
+    await page.getByRole('button', { name: /Review this prompt/ }).click();
+    await page.getByRole('button', { name: 'Reveal expected answer' }).click();
+    await page.getByText('Yes, correct').click();
+    await page.getByText('4', { exact: true }).click();
+    await page.getByRole('button', { name: 'Log answer & schedule next' }).click();
+    await expect(page.getByText('Next review: 3 days.')).toBeVisible();
+    await page.getByRole('link', { name: 'Data & access' }).click();
+    const firstCsv = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Export readable CSV' }).click();
+    await expect(await firstCsv).toBeTruthy();
+    await page.getByLabel('Backup passphrase').first().fill('free-export-passphrase');
+    const firstBackup = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download encrypted backup' }).click();
+    await expect(await firstBackup).toBeTruthy();
     await page.route(checkout, async (route) => {
       checkoutRequests += 1;
       expect(route.request().isNavigationRequest()).toBeTruthy();
@@ -329,13 +353,28 @@ test('@claim:one-time-price hands the $19 purchase through a 303 checkout handof
     });
     const purchase = page.getByRole('link', { name: /Buy Study archive · \$19/ });
     await expect(purchase).toHaveAttribute('href', checkout);
-    await expect(page.getByRole('button', { name: 'Export readable CSV' })).toBeVisible();
     await Promise.all([
       page.waitForURL(hostedCheckout),
       purchase.click(),
     ]);
     await expect(page.getByRole('heading', { name: 'Hosted checkout fixture' })).toBeVisible();
     expect(checkoutRequests).toBe(1);
+    await page.goto('/?license=price-license-token#/data');
+    await expect(page.getByText('Study archive · unlocked')).toBeVisible();
+    await page.getByRole('link', { name: /^Review/ }).click();
+    await page.getByRole('button', { name: /Review this prompt/ }).click();
+    await page.getByRole('button', { name: 'Reveal expected answer' }).click();
+    await page.getByText('Not yet').click();
+    await page.getByRole('radio', { name: '1' }).click();
+    await page.getByRole('button', { name: 'Log answer & schedule next' }).click();
+    await page.getByRole('link', { name: 'Data & access' }).click();
+    const secondCsv = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Export readable CSV' }).click();
+    await expect(await secondCsv).toBeTruthy();
+    await page.getByLabel('Backup passphrase').first().fill('still-free-after-license');
+    const secondBackup = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download encrypted backup' }).click();
+    await expect(await secondBackup).toBeTruthy();
   } finally {
     await new Promise<void>((resolve, reject) => fixture.close((error) => error ? reject(error) : resolve()));
   }
@@ -473,7 +512,7 @@ test('keeps the private empty state accessible at 390px', async ({ page }) => {
   const navBoxes = await page.locator('.nav-item').evaluateAll((items) => items.map((item) => item.getBoundingClientRect()).map(({ left, right, height }) => ({ left, right, height })));
   expect(navBoxes.every(({ height }) => height >= 44)).toBeTruthy();
   expect(navBoxes.slice(1).every(({ left }, index) => left - navBoxes[index].right >= 8)).toBeTruthy();
-  const lastFact = await page.getByText('Core reviews and exports are free. History reports cost $19 once.').boundingBox();
+  const lastFact = await page.getByText('Core reviews, CSV, and backups are free. History reports cost $19 once.').boundingBox();
   const dock = await page.locator('.side-nav').boundingBox();
   expect(lastFact && dock && lastFact.y + lastFact.height <= dock.y).toBeTruthy();
 });
@@ -554,6 +593,47 @@ test('@claim:nested-objectives-evidence persists a child objective and its evide
   await page.getByRole('link', { name: 'Objective map', exact: true }).click();
   await expect(page.locator('.objective-tree')).toContainText('Understand the solar system');
   await expect(page.locator('.objective-tree')).toContainText('Explain axial tilt');
+});
+
+test('commits prompt reviews and evidence before immediate navigation or reload across ten saves', async ({ page }) => {
+  test.setTimeout(90_000);
+  for (let attempt = 1; attempt <= 10; attempt += 1) {
+    await page.goto('/');
+    await page.evaluate(async () => {
+      localStorage.clear();
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.deleteDatabase('objective-loop');
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+        request.onblocked = () => reject(new Error('IndexedDB stayed open.'));
+      });
+    });
+    await page.reload();
+    const title = `Durable objective ${attempt}`;
+    const question = `Durable question ${attempt}?`;
+    const evidence = `https://example.com/durable-${attempt}`;
+    await page.getByRole('link', { name: 'Create your first objective' }).click();
+    await page.getByLabel('Objective *').fill(title);
+    await page.getByRole('button', { name: 'Save objective' }).click();
+    await page.getByLabel('Link label').fill(`Durable evidence ${attempt}`);
+    await page.getByLabel('Web address').fill(evidence);
+    await page.getByRole('button', { name: 'Attach evidence' }).click();
+    await page.getByLabel('Question *').fill(question);
+    await page.getByLabel('Expected answer *').fill(`Durable answer ${attempt}.`);
+    await page.getByRole('button', { name: 'Add to review queue' }).click();
+    await page.getByRole('button', { name: 'Review this prompt', exact: true }).click();
+    await page.getByRole('button', { name: 'Reveal expected answer' }).click();
+    await page.getByText('Yes, correct').click();
+    await page.getByText('4', { exact: true }).click();
+    await page.getByRole('button', { name: 'Log answer & schedule next' }).click();
+    await page.getByRole('link', { name: 'Objective map', exact: true }).click();
+    await page.reload();
+    await page.getByRole('link', { name: title }).click();
+    await expect(page.getByRole('link', { name: new RegExp(`Durable evidence ${attempt}.*opens external site`) })).toHaveAttribute('href', evidence);
+    await page.getByText('Answer, schedule & editing').click();
+    await expect(page.getByText('Correct · confidence 4/5')).toBeVisible();
+    await expect(page.getByText('3-day next step')).toBeVisible();
+  }
 });
 
 test('@claim:study-storage saves real study records in IndexedDB and uses a separate demo namespace', async ({ page }) => {

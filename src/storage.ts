@@ -6,6 +6,10 @@ const DB_NAME = 'objective-loop';
 const STORE = 'records';
 const STATE_KEY = 'state';
 const FALLBACK_KEY = 'objective-loop:state';
+const saveQueues: Record<StorageScope, Promise<void>> = {
+  real: Promise.resolve(),
+  demo: Promise.resolve(),
+};
 
 const dbName = (scope: StorageScope): string => scope === 'demo' ? `${DB_NAME}-demo` : DB_NAME;
 const fallbackKey = (scope: StorageScope): string => scope === 'demo' ? `demo:${FALLBACK_KEY}` : FALLBACK_KEY;
@@ -50,37 +54,92 @@ function openDb(scope: StorageScope): Promise<IDBDatabase> {
 }
 
 export async function loadState(scope: StorageScope = 'real'): Promise<AppState> {
+  const fallback = readFallback(scope);
   try {
     const db = await openDb(scope);
-    const state = await new Promise<AppState | undefined>((resolve, reject) => {
-      const request = db.transaction(STORE, 'readonly').objectStore(STORE).get(STATE_KEY);
-      request.onsuccess = () => resolve(request.result as AppState | undefined);
-      request.onerror = () => reject(request.error);
-    });
-    db.close();
-    return state ? discardUnsafeStoredEvidence(state) : emptyState();
+    try {
+      const stored = await new Promise<AppState | undefined>((resolve, reject) => {
+        const transaction = db.transaction(STORE, 'readonly');
+        const request = transaction.objectStore(STORE).get(STATE_KEY);
+        request.onsuccess = () => resolve(request.result as AppState | undefined);
+        request.onerror = () => reject(request.error);
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(transaction.error || new Error('Browser storage read was aborted.'));
+      });
+      return discardUnsafeStoredEvidence(newestState(stored, fallback) || emptyState());
+    } finally {
+      db.close();
+    }
   } catch {
-    const fallback = localStorage.getItem(fallbackKey(scope));
-    return fallback ? discardUnsafeStoredEvidence(JSON.parse(fallback) as AppState) : emptyState();
+    return fallback ? discardUnsafeStoredEvidence(fallback) : emptyState();
   }
+}
+
+function readFallback(scope: StorageScope): AppState | undefined {
+  try {
+    const value = localStorage.getItem(fallbackKey(scope));
+    return value ? JSON.parse(value) as AppState : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function newestState(stored: AppState | undefined, fallback: AppState | undefined): AppState | undefined {
+  if (!stored) return fallback;
+  if (!fallback) return stored;
+  return Date.parse(fallback.updatedAt) > Date.parse(stored.updatedAt) ? fallback : stored;
 }
 
 export async function saveState(state: AppState, scope: StorageScope = 'real'): Promise<void> {
-  state.updatedAt = new Date().toISOString();
+  const previousUpdatedAt = Date.parse(state.updatedAt);
+  state.updatedAt = new Date(Math.max(Date.now(), Number.isFinite(previousUpdatedAt) ? previousUpdatedAt + 1 : 0)).toISOString();
+  // IndexedDB request success only means the request was accepted. Waiting for
+  // transaction completion makes a save durable before the app navigates or a
+  // user reloads. Each scope also serializes saves so quick successive actions
+  // cannot let an older snapshot finish after a newer one.
+  const snapshot = structuredClone(state);
+  const serializedSnapshot = JSON.stringify(snapshot);
+  // A reload can interrupt an IndexedDB transaction after a button click but
+  // before its async handler returns. This scoped journal is synchronous and
+  // exists only until the IndexedDB transaction commits; it is never shared
+  // between the real and demo notebooks.
   try {
-    const db = await openDb(scope);
-    await new Promise<void>((resolve, reject) => {
-      const request = db.transaction(STORE, 'readwrite').objectStore(STORE).put(state, STATE_KEY);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-    db.close();
+    localStorage.setItem(fallbackKey(scope), serializedSnapshot);
   } catch {
-    localStorage.setItem(fallbackKey(scope), JSON.stringify(state));
+    // IndexedDB remains the primary store when localStorage is unavailable.
   }
+  const write = async (): Promise<void> => {
+    try {
+      const db = await openDb(scope);
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const transaction = db.transaction(STORE, 'readwrite');
+          transaction.objectStore(STORE).put(snapshot, STATE_KEY);
+          transaction.oncomplete = () => {
+            try {
+              if (localStorage.getItem(fallbackKey(scope)) === serializedSnapshot) localStorage.removeItem(fallbackKey(scope));
+            } catch {
+              // The durable IndexedDB write succeeded; an unavailable journal needs no action.
+            }
+            resolve();
+          };
+          transaction.onerror = () => reject(transaction.error);
+          transaction.onabort = () => reject(transaction.error || new Error('Browser storage save was aborted.'));
+        });
+      } finally {
+        db.close();
+      }
+    } catch {
+      // Keep the synchronous journal as the localStorage fallback.
+    }
+  };
+  const queued = saveQueues[scope].catch(() => undefined).then(write);
+  saveQueues[scope] = queued;
+  return queued;
 }
 
 export async function clearState(scope: StorageScope): Promise<void> {
+  await saveQueues[scope].catch(() => undefined);
   localStorage.removeItem(fallbackKey(scope));
   await new Promise<void>((resolve, reject) => {
     const request = indexedDB.deleteDatabase(dbName(scope));
