@@ -1,83 +1,49 @@
-# Objective Loop — polish 1 handoff
+# Objective Loop — verification 8 handoff
 
 ## Status: PASS
 
-Repairs are in commits `a4e28fca19a54eaa27e9281fd682e22ee0d356f9`
-and `2317fe12c902bdb87ccaf4d2268f03a071c2de97`, based on adversarial review
-commit `108ee3f8150d201eb0ff8e1c187940160677eb50`. Every F-1-1 through
-F-1-36 is mapped to a product change and evidence in `.factory/polish-1.md`.
+Candidate `91324afe7de2210a23d26589536549b19b9cdb53` was independently
+verified on 2026-08-30 against
+<https://learning-objective-loop.sociobot.in>. The deployment matches the
+candidate build across all 19 published artifacts. No product source was
+modified.
 
-## What changed
+## What was verified
 
-- Completed the plain-language landing skeleton while retaining the dithered
-  field-guide visual system.
-- Added a one-click isolated demo path for both empty and existing notebooks,
-  with Reset demo and Open my notebook controls.
-- Registered 17 observable claims and strengthened the tagged browser/unit
-  regressions for dates, demo isolation, privacy, restore, paid outputs,
-  network boundaries, storage, and manual-only behavior.
-- Corrected route titles, content-derived objective titles, 404 metadata and
-  legal links, external-link announcements, mobile navigation, and all review
-  copy findings.
+- The cold first screen explains what the product does, names self-learners,
+  and offers a visible one-click sample-data demo.
+- All 17 exact `.factory/claims.json` commands pass after a clean `npm ci`.
+- `npm test` passes 8/8, the exact build produces `dist/`, and the final full
+  browser run passes 31/31. The two-version PWA update test passes 5/5.
+- The live application suite passes 28/28. An independent 34-check mobile flow
+  covers normal study work, boundary metadata, invalid-input recovery,
+  persistence, manual scheduling, CSV, keyboard focus, axe, reduced motion,
+  same-origin privacy, demo isolation, and offline reload.
+- Checkout returns a hosted 303. License verification accepts 30 requests,
+  then returns 429 with `Retry-After: 4`.
+- Production Lighthouse scores 93 performance and 100 accessibility, best
+  practices, and SEO. LCP is 1.34 s, CLS is 0, and a representative Event
+  Timing interaction is 24 ms.
 
-## Verification evidence
+Full evidence and the one non-blocking test-timing observation are recorded in
+`.factory/verification-8.md`.
 
-From a clean clone at `/tmp/objective-loop-polish-clean` after `npm ci`:
-
-```text
-npm test -- -t "@claim:explained-scheduling"    PASS
-npm test -- -t "@claim:encrypted-backup"        PASS
-Every other exact command in .factory/claims.json PASS
-```
-
-The 15 browser claim commands each ran against a fresh Playwright context and
-passed. The full local gate in the repair worktree passed:
-
-```text
-npm test                                      PASS — 8/8
-npm run build                                 PASS — dist/ produced
-npm run test:e2e                              PASS — 31/31
-tests/deployment.spec.ts                      PASS
-tests/service-worker-update.spec.ts           PASS
-```
-
-The production bundle is 48.53 KB JavaScript raw / 15.30 KB gzip and 22.61 KB
-CSS raw / 5.63 KB gzip. The field-guide mobile illustration remains 18.5 KB.
-No webfonts ship.
-
-Fresh mobile Lighthouse against the deployed URL scored **100 performance / 100
-accessibility / 100 best practices / 100 SEO**, with LCP **1.5 s** and CLS
-**0**. The JSON report is
-`/work/.evidence/learning-objective-loop-polish-1/lighthouse.json`.
-
-## Run and deploy
+## Run and verify
 
 ```sh
 npm ci
 npm test
 npm run build
 npm run test:e2e
+npm run verify:live
+npm run test:live
 ```
-
-Deploy `dist/` as the existing static PWA. The repository’s static deployment
-configuration remains in `public/staticwebapp.config.json`.
 
 ## Known gaps
 
-None. The release was uploaded with `/opt/fleet/lib/deploy-static.sh
-learning-objective-loop dist` and is live at
-<https://learning-objective-loop.sociobot.in>.
+One initial 31-test run timed out on the verified-license recall-rate row after
+the unlocked state appeared. The exact claim test passed, 10 isolated repeats
+passed, the live suite passed, and a second full run passed 31/31. This appears
+to be a low-severity timing flake rather than a product failure.
 
-## Live deployment recheck
-
-The deployed cold landing page passed `/opt/fleet/lib/verify-url.sh` with a
-725 ms load measurement, no console errors, title `Objective Loop — plan
-learning reviews`, `lang=en`, one H1, a main landmark, no missing image alt
-text, and no unnamed buttons. Evidence is in
-`/work/.evidence/learning-objective-loop-polish-1/`.
-
-Live Playwright checks passed for the first screen at desktop and 390px,
-route/title/focus behavior, designed 404 metadata and legal footer links, demo
-isolation, and axe WCAG 2 A/AA scans of landing, demo, and 390px landing. The
-standalone axe CLI could not find a Chrome binary in this container; the
-project’s Playwright axe integration used its installed Chromium instead.
+No release-blocking defects remain. **PASS.**
