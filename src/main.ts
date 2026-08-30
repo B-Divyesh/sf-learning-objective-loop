@@ -22,6 +22,13 @@ let toastTimer: number | undefined;
 let updateReady = false;
 let isPremium = false;
 let licenseNotice = '';
+let reviewReturnFocus: { promptId: string; index: number } | null = null;
+
+class FormValidationError extends Error {
+  constructor(message: string, readonly fieldName: string) {
+    super(message);
+  }
+}
 
 const esc = (value: unknown): string => String(value ?? '')
   .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
@@ -143,11 +150,11 @@ function promptRow(prompt: Prompt): string {
 function objectiveTree(): string {
   const active = state.objectives.filter((item) => !item.archived);
   const roots = active.filter((item) => !item.parentId || !active.some((candidate) => candidate.id === item.parentId));
-  const branch = (objective: Objective, depth = 0): string => {
+  const branch = (objective: Objective): string => {
     const prompts = state.prompts.filter((prompt) => prompt.objectiveId === objective.id);
     const due = prompts.filter((prompt) => isDue(prompt)).length;
     const children = active.filter((item) => item.parentId === objective.id);
-    return `<li style="--depth:${depth}"><a class="objective-node" href="#/objective/${esc(objective.id)}"><span class="node-mark" aria-hidden="true"></span><span><strong>${esc(objective.title)}</strong><small>${prompts.length} prompts · ${due} due</small></span><span aria-hidden="true">→</span></a>${children.length ? `<ul>${children.map((child) => branch(child, depth + 1)).join('')}</ul>` : ''}</li>`;
+    return `<li><a class="objective-node" href="#/objective/${esc(objective.id)}"><span class="node-mark" aria-hidden="true"></span><span><strong>${esc(objective.title)}</strong><small>${prompts.length} prompts · ${due} due</small></span><span aria-hidden="true">→</span></a>${children.length ? `<ul>${children.map((child) => branch(child)).join('')}</ul>` : ''}</li>`;
   };
   return `<ul class="objective-tree">${roots.map((root) => branch(root)).join('')}</ul>`;
 }
@@ -193,7 +200,7 @@ function objectiveDetail(id: string): string {
         <form class="mini-form" data-form="evidence" data-objective-id="${esc(id)}"><div class="field"><label for="evidence-label">Link label</label><input id="evidence-label" name="label" required maxlength="100" placeholder="Chapter 4 notes"></div><div class="field"><label for="evidence-url">Web address</label><input id="evidence-url" name="url" type="url" inputmode="url" required placeholder="https://…"></div><button class="button button-quiet" type="submit">Attach evidence</button><p class="form-error" role="alert"></p></form>
       </section>
       ${children.length ? `<section><h3>Sub-objectives</h3><ul class="link-list">${children.map((child) => `<li><a href="#/objective/${esc(child.id)}">${esc(child.title)} →</a></li>`).join('')}</ul></section>` : ''}
-      <details class="settings-box"><summary>Edit objective</summary><form data-form="edit-objective" data-objective-id="${esc(id)}"><div class="field"><label for="edit-title">Title</label><input id="edit-title" name="title" required maxlength="120" value="${esc(objective.title)}"></div><div class="field"><label for="edit-description">Evidence statement</label><textarea id="edit-description" name="description" rows="4" maxlength="500">${esc(objective.description)}</textarea></div><button class="button button-quiet" type="submit">Save changes</button></form><button class="text-button danger" data-delete-objective="${esc(id)}">Delete this objective</button></details>
+      <details class="settings-box"><summary>Edit objective</summary><form data-form="edit-objective" data-objective-id="${esc(id)}"><div class="field"><label for="edit-title">Title</label><input id="edit-title" name="title" required maxlength="120" value="${esc(objective.title)}" aria-describedby="edit-objective-error"></div><div class="field"><label for="edit-description">Evidence statement</label><textarea id="edit-description" name="description" rows="4" maxlength="500" aria-describedby="edit-objective-error">${esc(objective.description)}</textarea></div><button class="button button-quiet" type="submit">Save changes</button><p class="form-error" id="edit-objective-error" role="alert"></p></form><button class="text-button danger" data-delete-objective="${esc(id)}">Delete this objective</button></details>
     </aside></div>`;
 }
 
@@ -202,7 +209,7 @@ function editablePrompt(prompt: Prompt): string {
     <details><summary>Answer, schedule & editing</summary><div class="answer-note"><strong>Expected answer</strong><p>${esc(prompt.answer)}</p></div>
       <form class="inline-schedule" data-form="schedule" data-prompt-id="${esc(prompt.id)}"><div class="field"><label for="date-${esc(prompt.id)}">Override next review</label><input id="date-${esc(prompt.id)}" type="date" name="dueDate" value="${esc(localDateValue(effectiveDueAt(prompt)))}"></div><button class="button button-quiet" type="submit">Set date</button>${prompt.manualDueAt ? `<button class="text-button" type="button" data-clear-override="${esc(prompt.id)}">Use calculated date</button>` : ''}</form>
       ${prompt.reviews.length ? `<div class="review-history"><strong>Recent evidence</strong><ul>${[...prompt.reviews].reverse().slice(0, 5).map((review) => `<li><span>${esc(formatDate(review.at))}</span><span>${review.correct ? 'Correct' : 'Not yet'} · confidence ${review.confidence}/5</span><span>${review.intervalDays}-day next step</span></li>`).join('')}</ul></div>` : ''}
-      <form class="edit-prompt" data-form="edit-prompt" data-prompt-id="${esc(prompt.id)}"><div class="field"><label for="question-${esc(prompt.id)}">Question</label><textarea id="question-${esc(prompt.id)}" name="question" rows="2" required>${esc(prompt.question)}</textarea></div><div class="field"><label for="answer-${esc(prompt.id)}">Expected answer</label><textarea id="answer-${esc(prompt.id)}" name="answer" rows="3" required>${esc(prompt.answer)}</textarea></div><button class="button button-quiet" type="submit">Save prompt</button><button class="text-button danger" type="button" data-delete-prompt="${esc(prompt.id)}">Delete prompt</button></form>
+      <form class="edit-prompt" data-form="edit-prompt" data-prompt-id="${esc(prompt.id)}"><div class="field"><label for="question-${esc(prompt.id)}">Question</label><textarea id="question-${esc(prompt.id)}" name="question" rows="2" required maxlength="400" aria-describedby="prompt-error-${esc(prompt.id)}">${esc(prompt.question)}</textarea></div><div class="field"><label for="answer-${esc(prompt.id)}">Expected answer</label><textarea id="answer-${esc(prompt.id)}" name="answer" rows="3" required maxlength="1200" aria-describedby="prompt-error-${esc(prompt.id)}">${esc(prompt.answer)}</textarea></div><button class="button button-quiet" type="submit">Save prompt</button><button class="text-button danger" type="button" data-delete-prompt="${esc(prompt.id)}">Delete prompt</button><p class="form-error" id="prompt-error-${esc(prompt.id)}" role="alert"></p></form>
     </details></li>`;
 }
 
@@ -257,7 +264,32 @@ function render(): void {
   else content = notFound();
   app.innerHTML = shell(content);
   const dialog = document.querySelector<HTMLDialogElement>('#review-dialog');
-  if (dialog && !dialog.open) dialog.showModal();
+  if (dialog && !dialog.open) {
+    dialog.addEventListener('cancel', () => {
+      activeReviewId = null;
+      answerRevealed = false;
+    }, { once: true });
+    dialog.addEventListener('close', closeReview, { once: true });
+    dialog.showModal();
+  }
+}
+
+function restoreReviewFocus(): void {
+  const returnTarget = reviewReturnFocus;
+  reviewReturnFocus = null;
+  if (!returnTarget) return;
+  queueMicrotask(() => {
+    const triggers = [...app.querySelectorAll<HTMLElement>('[data-review]')]
+      .filter((item) => item.dataset.review === returnTarget.promptId);
+    triggers[returnTarget.index]?.focus();
+  });
+}
+
+function closeReview(): void {
+  activeReviewId = null;
+  answerRevealed = false;
+  render();
+  restoreReviewFocus();
 }
 
 async function persist(message?: string): Promise<void> {
@@ -282,9 +314,22 @@ function showUpdateReady(): void {
   renderToastRegion();
 }
 
-function formError(form: HTMLFormElement, message: string): void {
+function clearFormError(form: HTMLFormElement): void {
+  const node = form.querySelector<HTMLElement>('.form-error');
+  if (node) node.textContent = '';
+  form.querySelectorAll<HTMLElement>('[aria-invalid="true"]').forEach((field) => field.removeAttribute('aria-invalid'));
+}
+
+function formError(form: HTMLFormElement, message: string, fieldName?: string): void {
   const node = form.querySelector<HTMLElement>('.form-error');
   if (node) node.textContent = message;
+  if (fieldName) {
+    const field = form.elements.namedItem(fieldName);
+    if (field instanceof HTMLElement) {
+      field.setAttribute('aria-invalid', 'true');
+      field.focus();
+    }
+  }
 }
 
 function download(name: string, content: string, type: string): void {
@@ -324,23 +369,39 @@ async function verifyLicense(token: string, force = false): Promise<void> {
 async function handleSubmit(form: HTMLFormElement): Promise<void> {
   const data = new FormData(form);
   const type = form.dataset.form;
+  clearFormError(form);
   try {
     if (type === 'objective') {
       const timestamp = now();
       const objective: Objective = { id: uid(), title: String(data.get('title')).trim(), description: String(data.get('description')).trim(), parentId: String(data.get('parentId') || '') || null, evidence: [], archived: false, createdAt: timestamp, updatedAt: timestamp };
-      if (!objective.title) throw new Error('Write an objective before saving.');
+      if (!objective.title) throw new FormValidationError('Write an objective before saving.', 'title');
+      if (objective.title.length > 120) throw new FormValidationError('Keep the objective to 120 characters or fewer.', 'title');
+      if (objective.description.length > 500) throw new FormValidationError('Keep the evidence statement to 500 characters or fewer.', 'description');
       state.objectives.push(objective); await persist('Objective added to your map.'); location.hash = `/objective/${objective.id}`;
     } else if (type === 'edit-objective') {
       const item = state.objectives.find((objective) => objective.id === form.dataset.objectiveId); if (!item) return;
-      item.title = String(data.get('title')).trim(); item.description = String(data.get('description')).trim(); item.updatedAt = now(); await persist('Objective updated.');
+      const title = String(data.get('title')).trim();
+      const description = String(data.get('description')).trim();
+      if (!title) throw new FormValidationError('Write an objective before saving.', 'title');
+      if (title.length > 120) throw new FormValidationError('Keep the objective to 120 characters or fewer.', 'title');
+      if (description.length > 500) throw new FormValidationError('Keep the evidence statement to 500 characters or fewer.', 'description');
+      item.title = title; item.description = description; item.updatedAt = now(); await persist('Objective updated.');
     } else if (type === 'prompt') {
       const timestamp = now();
       const prompt: Prompt = { id: uid(), objectiveId: form.dataset.objectiveId!, question: String(data.get('question')).trim(), answer: String(data.get('answer')).trim(), notes: String(data.get('notes')).trim(), stage: 0, dueAt: timestamp, manualDueAt: null, reviews: [], createdAt: timestamp, updatedAt: timestamp };
-      if (!prompt.question || !prompt.answer) throw new Error('Add both a question and expected answer.');
+      if (!prompt.question || !prompt.answer) throw new FormValidationError('Add both a question and expected answer.', !prompt.question ? 'question' : 'answer');
+      if (prompt.question.length > 400) throw new FormValidationError('Keep the question to 400 characters or fewer.', 'question');
+      if (prompt.answer.length > 1_200) throw new FormValidationError('Keep the expected answer to 1,200 characters or fewer.', 'answer');
+      if (prompt.notes.length > 200) throw new FormValidationError('Keep the review note to 200 characters or fewer.', 'notes');
       state.prompts.push(prompt); await persist('Prompt added. It is due now.');
     } else if (type === 'edit-prompt') {
       const prompt = state.prompts.find((item) => item.id === form.dataset.promptId); if (!prompt) return;
-      prompt.question = String(data.get('question')).trim(); prompt.answer = String(data.get('answer')).trim(); prompt.updatedAt = now(); await persist('Prompt updated.');
+      const question = String(data.get('question')).trim();
+      const answer = String(data.get('answer')).trim();
+      if (!question || !answer) throw new FormValidationError('Add both a question and expected answer.', !question ? 'question' : 'answer');
+      if (question.length > 400) throw new FormValidationError('Keep the question to 400 characters or fewer.', 'question');
+      if (answer.length > 1_200) throw new FormValidationError('Keep the expected answer to 1,200 characters or fewer.', 'answer');
+      prompt.question = question; prompt.answer = answer; prompt.updatedAt = now(); await persist('Prompt updated.');
     } else if (type === 'evidence') {
       const item = state.objectives.find((objective) => objective.id === form.dataset.objectiveId); if (!item) return;
       item.evidence.push({ id: uid(), label: String(data.get('label')).trim(), url: String(data.get('url')).trim(), createdAt: now() }); item.updatedAt = now(); await persist('Evidence attached.');
@@ -353,7 +414,7 @@ async function handleSubmit(form: HTMLFormElement): Promise<void> {
       if (correctValue === null || !confidenceValue) throw new Error('Choose correctness and confidence.');
       const at = new Date(); const result = scheduleReview(prompt.stage, correctValue === 'true', confidenceValue, at);
       prompt.reviews.push({ id: uid(), at: at.toISOString(), correct: correctValue === 'true', confidence: confidenceValue, priorStage: prompt.stage, newStage: result.stage, intervalDays: result.intervalDays });
-      prompt.stage = result.stage; prompt.dueAt = result.dueAt; prompt.manualDueAt = null; prompt.updatedAt = now(); activeReviewId = null; answerRevealed = false; await persist(result.explanation);
+      prompt.stage = result.stage; prompt.dueAt = result.dueAt; prompt.manualDueAt = null; prompt.updatedAt = now(); activeReviewId = null; answerRevealed = false; await persist(result.explanation); restoreReviewFocus();
     } else if (type === 'export') {
       const encrypted = await encryptState(state, String(data.get('passphrase'))); download(`objective-loop-${new Date().toISOString().slice(0, 10)}.loop`, encrypted, 'application/json'); showToast('Encrypted backup downloaded.'); render();
     } else if (type === 'import') {
@@ -365,7 +426,7 @@ async function handleSubmit(form: HTMLFormElement): Promise<void> {
       const token = String(data.get('token')).trim(); localStorage.setItem(licenseKey, token); licenseNotice = 'Checking this license…'; render(); await verifyLicense(token, true);
     }
   } catch (error) {
-    formError(form, error instanceof Error ? error.message : 'That action could not be completed.');
+    formError(form, error instanceof Error ? error.message : 'That action could not be completed.', error instanceof FormValidationError ? error.fieldName : undefined);
   }
 }
 
@@ -379,8 +440,12 @@ document.querySelector<HTMLAnchorElement>('.skip-link')?.addEventListener('click
 app.addEventListener('click', (event) => {
   const target = (event.target as HTMLElement).closest<HTMLElement>('button, a'); if (!target) return;
   const reviewId = target.dataset.review;
-  if (reviewId) { activeReviewId = reviewId; answerRevealed = false; render(); return; }
-  if (target.dataset.action === 'close-review') { activeReviewId = null; answerRevealed = false; render(); }
+  if (reviewId) {
+    const triggers = [...app.querySelectorAll<HTMLElement>('[data-review]')].filter((item) => item.dataset.review === reviewId);
+    reviewReturnFocus = { promptId: reviewId, index: triggers.indexOf(target) };
+    activeReviewId = reviewId; answerRevealed = false; render(); return;
+  }
+  if (target.dataset.action === 'close-review') { target.closest<HTMLDialogElement>('dialog')?.close(); return; }
   if (target.dataset.action === 'reveal') { answerRevealed = true; render(); }
   if (target.dataset.action === 'theme') { const dark = document.documentElement.dataset.theme === 'dark'; document.documentElement.dataset.theme = dark ? 'light' : 'dark'; localStorage.setItem('objective-loop:theme', dark ? 'light' : 'dark'); }
   if (target.dataset.action === 'retry') void boot();

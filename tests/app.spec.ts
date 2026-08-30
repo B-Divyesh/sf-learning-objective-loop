@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { readFile } from 'node:fs/promises';
 
 test('creates an objective, prompt, and review with an explained next date', async ({ page }) => {
   await page.goto('/');
@@ -18,6 +19,150 @@ test('creates an objective, prompt, and review with an explained next date', asy
   await expect(page.getByText(/advances one interval/i)).toBeVisible();
   await page.reload();
   await expect(page.getByText('Explain orbital seasons')).toBeVisible();
+});
+
+test('rejects blank edits without changing saved or exported learning content', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain escape velocity');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByLabel('Question *').fill('What determines escape velocity?');
+  await page.getByLabel('Expected answer *').fill('Mass and distance from the centre of the body.');
+  await page.getByRole('button', { name: 'Add to review queue' }).click();
+
+  await page.getByText('Edit objective').click();
+  await page.getByLabel('Title').fill('   ');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.locator('form[data-form="edit-objective"] [role="alert"]')).toHaveText('Write an objective before saving.');
+  await expect(page.getByRole('heading', { name: 'Explain escape velocity' })).toBeVisible();
+
+  await page.getByText('Answer, schedule & editing').click();
+  await page.getByLabel('Question', { exact: true }).fill('   ');
+  await page.getByLabel('Expected answer', { exact: true }).fill('   ');
+  await page.getByRole('button', { name: 'Save prompt' }).click();
+  await expect(page.locator('form[data-form="edit-prompt"] [role="alert"]')).toHaveText('Add both a question and expected answer.');
+  await expect(page.getByLabel('Question', { exact: true })).toBeFocused();
+  await expect(page.getByRole('heading', { name: 'What determines escape velocity?' })).toBeVisible();
+
+  await page.getByLabel('Question', { exact: true }).fill('What determines escape velocity?');
+  await page.getByRole('button', { name: 'Save prompt' }).click();
+  await expect(page.locator('form[data-form="edit-prompt"] [role="alert"]')).toHaveText('Add both a question and expected answer.');
+  await expect(page.getByLabel('Expected answer', { exact: true })).toBeFocused();
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Explain escape velocity' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What determines escape velocity?' })).toBeVisible();
+  await page.getByRole('link', { name: 'Data & access' }).click();
+  const downloadEvent = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export readable CSV' }).click();
+  const download = await downloadEvent;
+  const csv = await readFile(await download.path(), 'utf8');
+  expect(csv).toContain('"Explain escape velocity","What determines escape velocity?","Mass and distance from the centre of the body."');
+});
+
+test('rejects over-limit edits and keeps the last saved learning content', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain escape velocity');
+  await page.getByLabel('What counts as evidence?').fill('Explain it without notes.');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByLabel('Question *').fill('What determines escape velocity?');
+  await page.getByLabel('Expected answer *').fill('Mass and distance from the centre of the body.');
+  await page.getByRole('button', { name: 'Add to review queue' }).click();
+
+  await page.getByText('Edit objective').click();
+  const title = page.getByLabel('Title');
+  await title.evaluate((input: HTMLInputElement) => {
+    input.removeAttribute('maxlength');
+    input.value = 'T'.repeat(121);
+  });
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.locator('form[data-form="edit-objective"] [role="alert"]')).toHaveText('Keep the objective to 120 characters or fewer.');
+  await expect(title).toBeFocused();
+
+  const description = page.getByLabel('Evidence statement');
+  await title.fill('Explain escape velocity');
+  await description.evaluate((textarea: HTMLTextAreaElement) => {
+    textarea.removeAttribute('maxlength');
+    textarea.value = 'E'.repeat(501);
+  });
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.locator('form[data-form="edit-objective"] [role="alert"]')).toHaveText('Keep the evidence statement to 500 characters or fewer.');
+  await expect(description).toBeFocused();
+
+  await page.getByText('Answer, schedule & editing').click();
+  const question = page.getByLabel('Question', { exact: true });
+  await expect(question).toHaveAttribute('maxlength', '400');
+  await expect(page.getByLabel('Expected answer', { exact: true })).toHaveAttribute('maxlength', '1200');
+  await question.evaluate((textarea: HTMLTextAreaElement) => {
+    textarea.removeAttribute('maxlength');
+    textarea.value = 'Q'.repeat(401);
+  });
+  await page.getByRole('button', { name: 'Save prompt' }).click();
+  await expect(page.locator('form[data-form="edit-prompt"] [role="alert"]')).toHaveText('Keep the question to 400 characters or fewer.');
+  await expect(question).toBeFocused();
+
+  const answer = page.getByLabel('Expected answer', { exact: true });
+  await question.fill('What determines escape velocity?');
+  await answer.evaluate((textarea: HTMLTextAreaElement) => {
+    textarea.removeAttribute('maxlength');
+    textarea.value = 'A'.repeat(1_201);
+  });
+  await page.getByRole('button', { name: 'Save prompt' }).click();
+  await expect(page.locator('form[data-form="edit-prompt"] [role="alert"]')).toHaveText('Keep the expected answer to 1,200 characters or fewer.');
+  await expect(answer).toBeFocused();
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Explain escape velocity' })).toBeVisible();
+  await expect(page.locator('.objective-head').getByText('Explain it without notes.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'What determines escape velocity?' })).toBeVisible();
+  await page.getByText('Answer, schedule & editing').click();
+  await expect(page.locator('.answer-note').getByText('Mass and distance from the centre of the body.')).toBeVisible();
+  await page.getByRole('link', { name: 'Data & access' }).click();
+  const downloadEvent = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export readable CSV' }).click();
+  const download = await downloadEvent;
+  const csv = await readFile(await download.path(), 'utf8');
+  expect(csv).toContain('"Explain escape velocity","What determines escape velocity?","Mass and distance from the centre of the body."');
+});
+
+test('closes a review with Escape, keeps it closed on navigation, and restores focus', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain escape velocity');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByLabel('Question *').fill('What determines escape velocity?');
+  await page.getByLabel('Expected answer *').fill('Mass and distance from the centre of the body.');
+  await page.getByRole('button', { name: 'Add to review queue' }).click();
+
+  const trigger = page.getByRole('button', { name: 'Review', exact: true });
+  await trigger.click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await page.getByRole('link', { name: 'Data & access' }).click();
+  await expect(page.getByRole('heading', { name: 'Your learning record belongs to you' })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await page.getByRole('link', { name: /^Review/ }).click();
+  const reopenedTrigger = page.getByRole('button', { name: 'Review What determines escape velocity?' });
+  await reopenedTrigger.click();
+  await page.getByRole('button', { name: 'Close review' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(reopenedTrigger).toBeFocused();
+});
+
+test('renders a populated objective map without CSP-blocked inline styles', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain escape velocity');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByRole('link', { name: 'Objective map', exact: true }).click();
+  await expect(page.locator('.objective-tree [style]')).toHaveCount(0);
+  expect(consoleErrors).toEqual([]);
 });
 
 test('toast expiry preserves unsaved prompt fields and review choices', async ({ page }) => {
