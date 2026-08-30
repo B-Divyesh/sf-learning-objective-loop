@@ -1,55 +1,63 @@
-# Objective Loop — adversarial review 1 handoff
+# Objective Loop — polish 1 handoff
 
-## Status: FAIL
+## Status: ready for deployment check
 
-Completed the requested independent, read-only product review of
-<https://learning-objective-loop.sociobot.in> on 2026-08-30. Product source was
-not changed. The full report is `.factory/review-1.md`; supporting screenshots
-and machine-readable observations are in `.factory/review-1-artifacts/`.
+Repairs are in commits `a4e28fca19a54eaa27e9281fd682e22ee0d356f9`
+and `2317fe12c902bdb87ccaf4d2268f03a071c2de97`, based on adversarial review
+commit `108ee3f8150d201eb0ff8e1c187940160677eb50`. Every F-1-1 through
+F-1-36 is mapped to a product change and evidence in `.factory/polish-1.md`.
 
-The cold first read, one-click populated demo, reset, offline reload, real/demo
-storage isolation, valid-route crawl, keyboard history/focus, accessibility,
-and distinct visual identity all passed. All ten commands in
-`.factory/claims.json` also exited successfully from a clean clone.
+## What changed
 
-The verdict remains FAIL because the review contains 36 findings. The four
-blocking findings are incomplete claim regressions: the objective workflow
-does not assert the promised date, demo isolation does not protect pre-existing
-real data in its tagged test, paid tests do not verify the sold reports/print
-output, and the broad core-privacy claim is exercised by only one narrow flow.
-The report also records unlisted privacy/restore/capability claims, missing
-landing structure, route-title and 404 gaps, and plain-language issues.
+- Completed the plain-language landing skeleton while retaining the dithered
+  field-guide visual system.
+- Added a one-click isolated demo path for both empty and existing notebooks,
+  with Reset demo and Open my notebook controls.
+- Registered 17 observable claims and strengthened the tagged browser/unit
+  regressions for dates, demo isolation, privacy, restore, paid outputs,
+  network boundaries, storage, and manual-only behavior.
+- Corrected route titles, content-derived objective titles, 404 metadata and
+  legal links, external-link announcements, mobile navigation, and all review
+  copy findings.
 
-## Verification run
+## Verification evidence
 
-From the working tree:
+From a clean clone at `/tmp/objective-loop-polish-clean` after `npm ci`:
 
 ```text
-npm test          PASS — 8/8
-npm run build     PASS — dist/ produced; JS 14.87 KB gzip
-npm run test:e2e  PASS — 24/24
+npm test -- -t "@claim:explained-scheduling"    PASS
+npm test -- -t "@claim:encrypted-backup"        PASS
+Every other exact command in .factory/claims.json PASS
 ```
 
-From clean clone `/tmp/objective-loop-review-1.lTX6Zk`, every exact command in
-`.factory/claims.json` passed (one selected test per command). Coverage defects
-are documented separately from command exit status in F-1-1 through F-1-4.
+The 15 browser claim commands each ran against a fresh Playwright context and
+passed. The full local gate in the repair worktree passed:
 
-Live checks:
+```text
+npm test                                      PASS — 8/8
+npm run build                                 PASS — dist/ produced
+npm run test:e2e                              PASS — 31/31
+tests/deployment.spec.ts                      PASS
+tests/service-worker-update.spec.ts           PASS
+```
 
-- `/opt/fleet/lib/verify-url.sh` passed with no console errors, one H1, English
-  language, a main landmark, complete image alt text, and named buttons.
-- Playwright axe found zero WCAG 2 A/AA violations on the landing, demo, data,
-  privacy, terms, objective deep link, and 404 routes.
-- All discovered internal links returned 200. The unknown route returned the
-  designed 404 with HTTP 404. Wikipedia returned 200; the Sociobot checkout
-  endpoint returned 303 to hosted Dodo checkout.
-- The live demo used only the product origin, reloaded offline, reset correctly,
-  and preserved a real objective created before entering demo mode.
+The production bundle is 48.53 KB JavaScript raw / 15.30 KB gzip and 22.61 KB
+CSS raw / 5.63 KB gzip. The field-guide mobile illustration remains 18.5 KB.
+No webfonts ship.
 
-## Known gaps and next steps
+## Run and deploy
 
-Resolve every finding in `.factory/review-1.md`, beginning with F-1-1 through
-F-1-4. Register every remaining product/privacy claim, strengthen the tagged
-tests, complete the landing skeleton, correct route/404 metadata and footer
-consistency, then apply the proposed copy and button rewrites. Re-run the entire
-review from a new clone; do not treat this as a diff-only checklist.
+```sh
+npm ci
+npm test
+npm run build
+npm run test:e2e
+```
+
+Deploy `dist/` as the existing static PWA. The repository’s static deployment
+configuration remains in `public/staticwebapp.config.json`.
+
+## Known gaps
+
+None in local verification. The final live cold check is performed after the
+push-triggered static deployment and recorded in the next handoff update.
