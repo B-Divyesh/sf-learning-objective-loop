@@ -45,6 +45,11 @@ The production bundle is 48.53 KB JavaScript raw / 15.30 KB gzip and 22.61 KB
 CSS raw / 5.63 KB gzip. The field-guide mobile illustration remains 18.5 KB.
 No webfonts ship.
 
+Fresh mobile Lighthouse against the deployed URL scored **100 performance / 100
+accessibility / 100 best practices / 100 SEO**, with LCP **1.5 s** and CLS
+**0**. The JSON report is
+`/work/.evidence/learning-objective-loop-polish-1/lighthouse.json`.
+
 ## Run and deploy
 
 ```sh
