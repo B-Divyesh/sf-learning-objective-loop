@@ -5,6 +5,10 @@ import type { Prompt } from './types';
 const reviewedAt = new Date('2026-08-27T09:00:00.000Z');
 
 describe('explainable scheduler', () => {
+  it('@claim:explained-scheduling uses the disclosed interval ladder', () => {
+    expect([0, 1, 2, 3, 4, 5, 6].map((stage) => scheduleReview(stage, true, 3, reviewedAt).intervalDays)).toEqual([1, 3, 7, 14, 30, 60, 120]);
+  });
+
   it('resets an incorrect answer to one day', () => {
     const result = scheduleReview(4, false, 2, reviewedAt);
     expect(result.stage).toBe(0);

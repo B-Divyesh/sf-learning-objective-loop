@@ -3,11 +3,12 @@ import { decryptState, encryptState } from './crypto';
 import { emptyState } from './storage';
 
 describe('encrypted backup', () => {
-  it('round-trips local study data without plaintext leakage', async () => {
+  it('@claim:encrypted-backup round-trips local study data without plaintext leakage', async () => {
     const state = emptyState();
     state.objectives.push({ id: 'o1', title: 'Private objective', description: '', parentId: null, evidence: [], archived: false, createdAt: state.updatedAt, updatedAt: state.updatedAt });
     const encrypted = await encryptState(state, 'correct horse battery staple');
     expect(encrypted).not.toContain('Private objective');
+    expect(JSON.parse(encrypted)).toMatchObject({ format: 'objective-loop-encrypted', kdf: 'PBKDF2-SHA256', iterations: 250_000 });
     expect((await decryptState(encrypted, 'correct horse battery staple')).objectives[0].title).toBe('Private objective');
   });
 

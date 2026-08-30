@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readFile } from 'node:fs/promises';
 
-test('creates an objective, prompt, and review with an explained next date', async ({ page }) => {
+test('@claim:objective-review-workflow creates an objective, prompt, and review with an explained next date', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Create your first objective' }).click();
   await page.getByLabel('Objective *').fill('Explain orbital seasons');
@@ -21,7 +21,7 @@ test('creates an objective, prompt, and review with an explained next date', asy
   await expect(page.getByText('Explain orbital seasons')).toBeVisible();
 });
 
-test('rejects blank edits without changing saved or exported learning content', async ({ page }) => {
+test('@claim:csv-export rejects blank edits without changing saved or exported learning content', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Create your first objective' }).click();
   await page.getByLabel('Objective *').fill('Explain escape velocity');
@@ -168,6 +168,58 @@ test('renders a populated objective map without CSP-blocked inline styles', asyn
   expect(consoleErrors).toEqual([]);
 });
 
+test('@claim:demo-sandbox opens sample data in one click without touching real data', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Try it with sample data' }).click();
+  await expect(page).toHaveURL(/\?demo=1#\/today$/);
+  await expect(page.getByText('Demo — sample data, nothing is saved to your notebook.')).toBeVisible();
+  await expect(page.locator('.metric-strip div').filter({ hasText: 'active objectives' }).getByText('3')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Why is it summer in Australia when it is winter in Europe?' })).toBeVisible();
+  const demoResults = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  expect(demoResults.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
+  await page.getByRole('link', { name: 'New objective' }).click();
+  await page.getByLabel('Objective *').fill('Demo-only objective');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await expect(page.getByRole('heading', { name: 'Demo-only objective' })).toBeVisible();
+  await page.getByRole('button', { name: 'Reset demo' }).click();
+  await expect(page.getByText('Demo sample restored.')).toBeVisible();
+  await expect(page.getByText('Demo-only objective')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Start for real' }).click();
+  await expect(page).toHaveURL(/\/#\/today$/);
+  await expect(page.getByRole('link', { name: 'Try it with sample data' })).toBeVisible();
+  await expect(page.getByText('Demo-only objective')).toHaveCount(0);
+  await page.goto('/?demo=1#/today');
+  await expect(page.locator('.metric-strip div').filter({ hasText: 'active objectives' }).getByText('3')).toBeVisible();
+  await expect(page.getByText('Demo-only objective')).toHaveCount(0);
+});
+
+test('@claim:manual-override persists a visible manual date and restores the calculation', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain orbital seasons');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  await page.getByLabel('Question *').fill('Why does axial tilt create seasons?');
+  await page.getByLabel('Expected answer *').fill('Tilt changes sunlight angle and day length.');
+  await page.getByRole('button', { name: 'Add to review queue' }).click();
+  await page.getByText('Answer, schedule & editing').click();
+  await page.getByLabel('Override next review').fill('2030-01-15');
+  await page.getByRole('button', { name: 'Set date' }).click();
+  await expect(page.getByText('Manual date', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Manual date', { exact: true })).toBeVisible();
+  await page.getByText('Answer, schedule & editing').click();
+  await page.getByRole('button', { name: 'Use calculated date' }).click();
+  await expect(page.getByText('Calculated review date restored.')).toBeVisible();
+  await expect(page.getByText('Stage 1', { exact: true })).toBeVisible();
+});
+
+test('@claim:one-time-price shows the $19 Sociobot purchase and keeps export free', async ({ page }) => {
+  await page.goto('/#/data');
+  await expect(page.getByRole('link', { name: 'Buy once · $19' })).toHaveAttribute('href', 'https://api.sociobot.in/api/v1/products/learning-objective-loop/checkout');
+  await expect(page.getByRole('button', { name: 'Export readable CSV' })).toBeVisible();
+});
+
 test('toast expiry preserves unsaved prompt fields and review choices', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Create your first objective' }).click();
@@ -257,7 +309,7 @@ test('supports keyboard navigation and dark treatment', async ({ page }) => {
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
 });
 
-test('stores a returned license, strips it from the URL, and unlocks after verification', async ({ page }) => {
+test('@claim:verified-license stores a returned license, strips it from the URL, and unlocks after verification', async ({ page }) => {
   let verificationRequests = 0;
   await page.route('https://api.sociobot.in/api/v1/products/learning-objective-loop/verify?license=paid-license-token', async (route) => {
     verificationRequests += 1;
@@ -285,7 +337,7 @@ test('keeps the private empty state accessible at 390px', async ({ page }) => {
   expect(navBoxes.slice(1).every(({ left }, index) => left - navBoxes[index].right >= 8)).toBeTruthy();
 });
 
-test('keeps populated objective links at least 44px tall on mobile', async ({ page }) => {
+test('@claim:private-core keeps populated objective links at least 44px tall on mobile', async ({ page }) => {
   const requestOrigins = new Set<string>();
   page.on('request', (request) => requestOrigins.add(new URL(request.url()).origin));
   await page.setViewportSize({ width: 390, height: 844 });
@@ -301,12 +353,14 @@ test('keeps populated objective links at least 44px tall on mobile', async ({ pa
   expect([...requestOrigins]).toEqual([new URL(page.url()).origin]);
 });
 
-test('reloads while offline after the service worker controls the page', async ({ page, context }) => {
-  await page.goto('/');
+test('@claim:offline-reload reloads while offline after the service worker controls the page', async ({ page, context }) => {
+  await page.goto('/?demo=1#/today');
   await page.waitForFunction(() => navigator.serviceWorker?.ready);
   await page.reload();
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByRole('heading', { name: /Objective Loop/i, level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Why is it summer in Australia when it is winter in Europe?' })).toBeVisible();
+  await expect(page.getByText('Demo — sample data, nothing is saved to your notebook.')).toBeVisible();
   await expect(page.getByText(/Offline · saved here/i)).toBeAttached();
 });

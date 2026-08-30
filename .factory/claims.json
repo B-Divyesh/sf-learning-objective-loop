@@ -1,0 +1,72 @@
+[
+  {
+    "id": "objective-review-workflow",
+    "claim": "Recall prompts stay attached to learning objectives and each answer produces an explained next review date.",
+    "where": "app onboarding, review queue, README",
+    "test": "npm run test:e2e -- --grep \"@claim:objective-review-workflow\"",
+    "sandbox": "fresh browser context; create an objective and prompt; reveal, grade, reload, and inspect the schedule explanation"
+  },
+  {
+    "id": "explained-scheduling",
+    "claim": "Calculated reviews use the disclosed 1, 3, 7, 14, 30, 60, and 120-day interval ladder.",
+    "where": "review calculation, README",
+    "test": "npm test -- -t \"@claim:explained-scheduling\"",
+    "sandbox": "deterministic scheduler input at each stage"
+  },
+  {
+    "id": "manual-override",
+    "claim": "A learner can set a visible manual review date and return to the calculated date.",
+    "where": "prompt schedule editor, README",
+    "test": "npm run test:e2e -- --grep \"@claim:manual-override\"",
+    "sandbox": "fresh browser context with one objective and prompt; set, reload, and clear a manual date"
+  },
+  {
+    "id": "csv-export",
+    "claim": "The learning record exports as readable CSV without changing saved content.",
+    "where": "Data & access, README",
+    "test": "npm run test:e2e -- --grep \"@claim:csv-export\"",
+    "sandbox": "fresh browser context with one objective and prompt; download and inspect the CSV"
+  },
+  {
+    "id": "encrypted-backup",
+    "claim": "Encrypted backups use PBKDF2-SHA256 with 250,000 iterations and AES-256-GCM without plaintext study content.",
+    "where": "Data & access, README",
+    "test": "npm test -- -t \"@claim:encrypted-backup\"",
+    "sandbox": "deterministic local state encrypted and decrypted with Web Crypto"
+  },
+  {
+    "id": "offline-reload",
+    "claim": "The installed app reloads offline after its first online visit.",
+    "where": "README, connection status",
+    "test": "npm run test:e2e -- --grep \"@claim:offline-reload\"",
+    "sandbox": "fresh browser context; wait for service-worker control, go offline, and reload"
+  },
+  {
+    "id": "private-core",
+    "claim": "Core study actions send requests only to the product origin.",
+    "where": "navigation note, Privacy, README",
+    "test": "npm run test:e2e -- --grep \"@claim:private-core\"",
+    "sandbox": "fresh browser context; record every request while creating and viewing an objective"
+  },
+  {
+    "id": "demo-sandbox",
+    "claim": "Sample data opens in one click and remains separate from the learner's real notebook.",
+    "where": "first-use screen, demo banner, README",
+    "test": "npm run test:e2e -- --grep \"@claim:demo-sandbox\"",
+    "sandbox": "fresh browser context; enter demo, mutate and reset it, then leave and verify the real namespace remains empty"
+  },
+  {
+    "id": "one-time-price",
+    "claim": "Study archive is a one-time $19 Sociobot purchase while core CSV export remains free.",
+    "where": "Data & access, Terms, README",
+    "test": "npm run test:e2e -- --grep \"@claim:one-time-price\"",
+    "sandbox": "fresh browser context on Data & access; inspect the hosted checkout target and free export control"
+  },
+  {
+    "id": "verified-license",
+    "claim": "A valid returned Sociobot license unlocks Study archive on that device.",
+    "where": "Data & access, README",
+    "test": "npm run test:e2e -- --grep \"@claim:verified-license\"",
+    "sandbox": "fresh browser context with a recorded valid verification response; assert token storage, URL cleanup, and unlocked state"
+  }
+]

@@ -1,9 +1,14 @@
 import type { AppState } from './types';
 
+export type StorageScope = 'real' | 'demo';
+
 const DB_NAME = 'objective-loop';
 const STORE = 'records';
 const STATE_KEY = 'state';
 const FALLBACK_KEY = 'objective-loop:state';
+
+const dbName = (scope: StorageScope): string => scope === 'demo' ? `${DB_NAME}-demo` : DB_NAME;
+const fallbackKey = (scope: StorageScope): string => scope === 'demo' ? `demo:${FALLBACK_KEY}` : FALLBACK_KEY;
 
 export const emptyState = (): AppState => ({
   version: 1,
@@ -12,9 +17,9 @@ export const emptyState = (): AppState => ({
   updatedAt: new Date().toISOString(),
 });
 
-function openDb(): Promise<IDBDatabase> {
+function openDb(scope: StorageScope): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
+    const request = indexedDB.open(dbName(scope), 1);
     request.onupgradeneeded = () => {
       if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE);
     };
@@ -23,9 +28,9 @@ function openDb(): Promise<IDBDatabase> {
   });
 }
 
-export async function loadState(): Promise<AppState> {
+export async function loadState(scope: StorageScope = 'real'): Promise<AppState> {
   try {
-    const db = await openDb();
+    const db = await openDb(scope);
     const state = await new Promise<AppState | undefined>((resolve, reject) => {
       const request = db.transaction(STORE, 'readonly').objectStore(STORE).get(STATE_KEY);
       request.onsuccess = () => resolve(request.result as AppState | undefined);
@@ -34,15 +39,15 @@ export async function loadState(): Promise<AppState> {
     db.close();
     return state || emptyState();
   } catch {
-    const fallback = localStorage.getItem(FALLBACK_KEY);
+    const fallback = localStorage.getItem(fallbackKey(scope));
     return fallback ? (JSON.parse(fallback) as AppState) : emptyState();
   }
 }
 
-export async function saveState(state: AppState): Promise<void> {
+export async function saveState(state: AppState, scope: StorageScope = 'real'): Promise<void> {
   state.updatedAt = new Date().toISOString();
   try {
-    const db = await openDb();
+    const db = await openDb(scope);
     await new Promise<void>((resolve, reject) => {
       const request = db.transaction(STORE, 'readwrite').objectStore(STORE).put(state, STATE_KEY);
       request.onsuccess = () => resolve();
@@ -50,8 +55,18 @@ export async function saveState(state: AppState): Promise<void> {
     });
     db.close();
   } catch {
-    localStorage.setItem(FALLBACK_KEY, JSON.stringify(state));
+    localStorage.setItem(fallbackKey(scope), JSON.stringify(state));
   }
+}
+
+export async function clearState(scope: StorageScope): Promise<void> {
+  localStorage.removeItem(fallbackKey(scope));
+  await new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(dbName(scope));
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+    request.onblocked = () => reject(new Error('Close other demo tabs, then try again.'));
+  });
 }
 
 export function validateState(value: unknown): AppState {

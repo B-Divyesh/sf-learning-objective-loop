@@ -1,7 +1,8 @@
 import './style.css';
 import { decryptState, encryptState } from './crypto';
 import { dateInputToIso, dueReason, effectiveDueAt, formatDate, isDue, localDateValue, scheduleReview } from './scheduler';
-import { emptyState, loadState, saveState, validateState } from './storage';
+import { clearState, emptyState, loadState, saveState, validateState } from './storage';
+import type { StorageScope } from './storage';
 import type { AppState, Confidence, Objective, Prompt } from './types';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -11,6 +12,8 @@ const slug = 'learning-objective-loop';
 const billingBase = import.meta.env.VITE_BILLING_API_BASE || 'https://api.sociobot.in/api/v1';
 const licenseKey = `sb_license:${slug}`;
 const verdictKey = `${licenseKey}:verdict`;
+const storageScope: StorageScope = new URLSearchParams(location.search).get('demo') === '1' ? 'demo' : 'real';
+const demoMode = storageScope === 'demo';
 
 let state: AppState = emptyState();
 let loading = true;
@@ -38,6 +41,26 @@ const uid = (): string => crypto.randomUUID();
 const now = (): string => new Date().toISOString();
 const route = (): string => location.hash.replace(/^#\/?/, '') || 'today';
 const selectedObjectiveId = (): string | null => route().startsWith('objective/') ? route().split('/')[1] || null : null;
+
+function sampleState(): AppState {
+  const timestamp = now();
+  const fourDaysAgo = new Date(Date.now() - 4 * 86_400_000).toISOString();
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+  return {
+    version: 1,
+    updatedAt: timestamp,
+    objectives: [
+      { id: 'demo-seasons', title: 'Explain why seasons differ by hemisphere', description: 'Explain axial tilt with a diagram and compare June in both hemispheres.', parentId: null, evidence: [{ id: 'demo-seasons-source', label: 'Axial tilt notes', url: 'https://en.wikipedia.org/wiki/Season', createdAt: timestamp }], archived: false, createdAt: timestamp, updatedAt: timestamp },
+      { id: 'demo-cells', title: 'Compare mitosis and meiosis', description: 'Name the purpose, cell divisions, and resulting chromosome count without notes.', parentId: null, evidence: [], archived: false, createdAt: timestamp, updatedAt: timestamp },
+      { id: 'demo-escape', title: 'Derive escape velocity', description: 'Start from energy conservation and explain each term in the result.', parentId: null, evidence: [], archived: false, createdAt: timestamp, updatedAt: timestamp },
+    ],
+    prompts: [
+      { id: 'demo-seasons-prompt', objectiveId: 'demo-seasons', question: 'Why is it summer in Australia when it is winter in Europe?', answer: 'Earth’s tilt points the southern hemisphere toward the Sun while the northern hemisphere points away, changing light angle and day length.', notes: 'Sketch the tilted axis.', stage: 0, dueAt: timestamp, manualDueAt: null, reviews: [], createdAt: timestamp, updatedAt: timestamp },
+      { id: 'demo-cells-prompt', objectiveId: 'demo-cells', question: 'What two outcomes distinguish meiosis from mitosis?', answer: 'Meiosis creates four genetically varied haploid cells; mitosis creates two genetically similar cells with the original chromosome count.', notes: '', stage: 0, dueAt: timestamp, manualDueAt: null, reviews: [], createdAt: timestamp, updatedAt: timestamp },
+      { id: 'demo-escape-prompt', objectiveId: 'demo-escape', question: 'Why does escape velocity not depend on the mass of the launched object?', answer: 'The object’s mass appears in both kinetic and gravitational potential energy, so it cancels when the energies are equated.', notes: '', stage: 1, dueAt: tomorrow, manualDueAt: null, reviews: [{ id: 'demo-escape-review', at: fourDaysAgo, correct: true, confidence: 4, priorStage: 0, newStage: 1, intervalDays: 3 }], createdAt: fourDaysAgo, updatedAt: fourDaysAgo },
+    ],
+  };
+}
 
 function objectiveFor(prompt: Prompt): Objective | undefined {
   return state.objectives.find((objective) => objective.id === prompt.objectiveId);
@@ -71,6 +94,7 @@ function shell(content: string): string {
         <button class="icon-button" data-action="theme" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span></button>
       </div>
     </header>
+    ${demoMode ? `<aside class="demo-banner" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved to your notebook.</strong><span><button class="text-button" type="button" data-action="reset-demo">Reset demo</button><button class="text-button" type="button" data-action="start-real">Start for real</button></span></aside>` : ''}
     <div class="app-grid">
       <nav class="side-nav" aria-label="Main navigation">
         <div class="nav-primary">
@@ -110,8 +134,9 @@ function emptyToday(): string {
       <p class="kicker">Your first loop</p>
       <h2>Turn an intention into a review you can explain.</h2>
       <p>Start with one outcome you want to be able to demonstrate. Add your own short-answer prompt, then let each answer set the next review date.</p>
+      <div class="onboarding-actions"><a class="button button-primary" href="/?demo=1#/today">Try it with sample data</a><a class="button button-quiet" href="#/new-objective">Create your first objective</a></div>
+      <ul class="fact-lines"><li>Works offline after the first visit.</li><li>Study content stays in this browser.</li><li>Core notebook free; Study archive $19 once.</li></ul>
       <ol class="steps"><li><span>01</span>State an objective</li><li><span>02</span>Write a recall prompt</li><li><span>03</span>Review with evidence</li></ol>
-      <a class="button button-primary" href="#/new-objective">Create your first objective</a>
     </div>
     <picture><source media="(max-width: 720px)" srcset="/assets/objective-field-map-720.427b472e8f53.webp"><img src="/assets/objective-field-map.e409d0f7909f.webp" width="1200" height="800" alt="A screen-printed notebook diagram linking an objective tree to prompt slips and a review calendar." fetchpriority="high" decoding="async"></picture>
   </section>`;
@@ -293,9 +318,30 @@ function closeReview(): void {
 }
 
 async function persist(message?: string): Promise<void> {
-  await saveState(state);
+  await saveState(state, storageScope);
   if (message) showToast(message);
   render();
+}
+
+async function resetDemo(): Promise<void> {
+  if (!demoMode) return;
+  state = sampleState();
+  await saveState(state, storageScope);
+  activeReviewId = null;
+  answerRevealed = false;
+  location.hash = '/today';
+  showToast('Demo sample restored.');
+  render();
+}
+
+async function startForReal(): Promise<void> {
+  if (!demoMode) return;
+  try {
+    await clearState('demo');
+    location.assign('/#/today');
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : 'The demo could not be cleared. Try again.');
+  }
 }
 
 function showToast(message: string): void {
@@ -449,6 +495,8 @@ app.addEventListener('click', (event) => {
   if (target.dataset.action === 'reveal') { answerRevealed = true; render(); }
   if (target.dataset.action === 'theme') { const dark = document.documentElement.dataset.theme === 'dark'; document.documentElement.dataset.theme = dark ? 'light' : 'dark'; localStorage.setItem('objective-loop:theme', dark ? 'light' : 'dark'); }
   if (target.dataset.action === 'retry') void boot();
+  if (target.dataset.action === 'reset-demo') { void resetDemo(); return; }
+  if (target.dataset.action === 'start-real') { void startForReal(); return; }
   if (target.dataset.action === 'csv') { download(`objective-loop-${new Date().toISOString().slice(0, 10)}.csv`, csvExport(), 'text/csv'); showToast('Readable CSV downloaded.'); render(); }
   if (target.dataset.action === 'print') window.print();
   if (target.dataset.action === 'reload-update') location.reload();
@@ -495,7 +543,14 @@ function setupPwa(): void {
 
 async function boot(): Promise<void> {
   loading = true; loadError = ''; render();
-  try { state = await loadState(); loading = false; render(); }
+  try {
+    state = await loadState(storageScope);
+    if (demoMode && !state.objectives.length) {
+      state = sampleState();
+      await saveState(state, storageScope);
+    }
+    loading = false; render();
+  }
   catch (error) { loading = false; loadError = error instanceof Error ? error.message : 'Browser storage is unavailable.'; render(); }
 }
 
