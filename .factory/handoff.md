@@ -1,6 +1,6 @@
 # Objective Loop — polish 1 handoff
 
-## Status: ready for deployment check
+## Status: PASS
 
 Repairs are in commits `a4e28fca19a54eaa27e9281fd682e22ee0d356f9`
 and `2317fe12c902bdb87ccaf4d2268f03a071c2de97`, based on adversarial review
@@ -59,5 +59,20 @@ configuration remains in `public/staticwebapp.config.json`.
 
 ## Known gaps
 
-None in local verification. The final live cold check is performed after the
-push-triggered static deployment and recorded in the next handoff update.
+None. The release was uploaded with `/opt/fleet/lib/deploy-static.sh
+learning-objective-loop dist` and is live at
+<https://learning-objective-loop.sociobot.in>.
+
+## Live deployment recheck
+
+The deployed cold landing page passed `/opt/fleet/lib/verify-url.sh` with a
+725 ms load measurement, no console errors, title `Objective Loop — plan
+learning reviews`, `lang=en`, one H1, a main landmark, no missing image alt
+text, and no unnamed buttons. Evidence is in
+`/work/.evidence/learning-objective-loop-polish-1/`.
+
+Live Playwright checks passed for the first screen at desktop and 390px,
+route/title/focus behavior, designed 404 metadata and legal footer links, demo
+isolation, and axe WCAG 2 A/AA scans of landing, demo, and 390px landing. The
+standalone axe CLI could not find a Chrome binary in this container; the
+project’s Playwright axe integration used its installed Chromium instead.

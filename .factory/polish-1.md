@@ -42,3 +42,18 @@ Candidate repaired from `108ee3f8150d201eb0ff8e1c187940160677eb50`.
 | F-1-36 | Changed populated map H1 to “Your learning objectives.” | map test |
 
 The final handoff records the clean-clone claim run, local browser checks, and live URL recheck.
+
+## Live recheck evidence
+
+- Live URL: <https://learning-objective-loop.sociobot.in>
+- Cold verifier: `/work/.evidence/learning-objective-loop-polish-1/verify.json`
+  (title, language, main landmark, image alt text, unnamed controls, and
+  console errors all passed).
+- Screenshots: `/work/.evidence/learning-objective-loop-polish-1/screenshot-desktop.png`
+  and `/work/.evidence/learning-objective-loop-polish-1/screenshot-mobile.png`.
+- Live Playwright checks: first screen at desktop and 390px; routes, titles,
+  focus, 404 metadata/footer; isolated demo; and axe WCAG 2 A/AA scans of the
+  empty landing, demo, and 390px landing all passed.
+- The standalone `@axe-core/cli` invocation could not locate Chrome in this
+  container. Playwright’s installed Chromium and `@axe-core/playwright`
+  integration supplied the equivalent live scan.
