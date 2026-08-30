@@ -1,0 +1,375 @@
+{
+  "routes": {
+    "/": {
+      "status": 200,
+      "url": "https://learning-objective-loop.sociobot.in/",
+      "title": "Objective Loop — explainable learning reviews",
+      "description": "Plan recall reviews around learning objectives with an inspectable schedule.",
+      "canonical": "https://learning-objective-loop.sociobot.in/",
+      "h1Count": 1,
+      "h1": [
+        "Plan reviews around your learning objectives"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 1,
+      "termsLinks": 1,
+      "consoleErrors": []
+    },
+    "/demo": {
+      "status": 200,
+      "url": "https://learning-objective-loop.sociobot.in/demo",
+      "title": "Demo — Objective Loop",
+      "description": "Try Objective Loop with sample learning objectives and due review prompts.",
+      "canonical": "https://learning-objective-loop.sociobot.in/demo",
+      "h1Count": 1,
+      "h1": [
+        "2 prompts are due"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 1,
+      "termsLinks": 1,
+      "consoleErrors": []
+    },
+    "/today": {
+      "status": 200,
+      "url": "https://learning-objective-loop.sociobot.in/today",
+      "title": "Objective Loop — explainable learning reviews",
+      "description": "Plan recall reviews around learning objectives with an inspectable schedule.",
+      "canonical": "https://learning-objective-loop.sociobot.in/today",
+      "h1Count": 1,
+      "h1": [
+        "Plan reviews around your learning objectives"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 1,
+      "termsLinks": 1,
+      "consoleErrors": []
+    },
+    "/objectives": {
+      "status": 200,
+      "url": "https://learning-objective-loop.sociobot.in/objectives",
+      "title": "Objectives — Objective Loop",
+      "description": "Map learning objectives, evidence, and recall prompts in Objective Loop.",
+      "canonical": "https://learning-objective-loop.sociobot.in/objectives",
+      "h1Count": 1,
+      "h1": [
+        "Map what you want to know"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 1,
+      "termsLinks": 1,
+      "consoleErrors": []
+    },
+    "/new-objective": {
+      "status": 200,
+      "url": "https://learning-objective-loop.sociobot.in/new-objective",
+      "title": "New objective — Objective Loop",
+      "description": "Add a clear learning objective to your local Objective Loop notebook.",
+      "canonical": "https://learning-objective-loop.sociobot.in/new-objective",
+      "h1Count": 1,
+      "h1": [
+        "State the learning objective"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 1,
+      "termsLinks": 1,
+      "consoleErrors": []
+    },
+    "/data": {
+      "status": 200,
+      "url": "https://learning-objective-loop.sociobot.in/data",
+      "title": "Data & access — Objective Loop",
+      "description": "Export, restore, and manage optional Study archive access in Objective Loop.",
+      "canonical": "https://learning-objective-loop.sociobot.in/data",
+      "h1Count": 1,
+      "h1": [
+        "Your learning record belongs to you"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 1,
+      "termsLinks": 1,
+      "consoleErrors": []
+    },
+    "/privacy": {
+      "status": 200,
+      "url": "https://learning-objective-loop.sociobot.in/privacy",
+      "title": "Privacy — Objective Loop",
+      "description": "How Objective Loop stores study records locally and handles optional billing.",
+      "canonical": "https://learning-objective-loop.sociobot.in/privacy",
+      "h1Count": 1,
+      "h1": [
+        "Privacy"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 1,
+      "termsLinks": 1,
+      "consoleErrors": []
+    },
+    "/terms": {
+      "status": 200,
+      "url": "https://learning-objective-loop.sociobot.in/terms",
+      "title": "Terms — Objective Loop",
+      "description": "Terms for Objective Loop and its optional one-time Study archive license.",
+      "canonical": "https://learning-objective-loop.sociobot.in/terms",
+      "h1Count": 1,
+      "h1": [
+        "Terms"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 1,
+      "termsLinks": 1,
+      "consoleErrors": []
+    },
+    "/objectives/demo-seasons?demo=1": {
+      "status": 200,
+      "url": "https://learning-objective-loop.sociobot.in/objectives/demo-seasons?demo=1",
+      "title": "Objective — Objective Loop",
+      "description": "Recall prompts and evidence for the learning objective: Explain why seasons differ by hemisphere.",
+      "canonical": "https://learning-objective-loop.sociobot.in/objectives/demo-seasons",
+      "h1Count": 1,
+      "h1": [
+        "Explain why seasons differ by hemisphere"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 1,
+      "termsLinks": 1,
+      "consoleErrors": []
+    },
+    "/404.html": {
+      "status": 200,
+      "url": "https://learning-objective-loop.sociobot.in/404.html",
+      "title": "Page not found — Objective Loop",
+      "description": null,
+      "canonical": null,
+      "h1Count": 1,
+      "h1": [
+        "This page is not in the notebook"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 0,
+      "termsLinks": 0,
+      "consoleErrors": []
+    },
+    "/not-a-real-review-route": {
+      "status": 404,
+      "url": "https://learning-objective-loop.sociobot.in/not-a-real-review-route",
+      "title": "Page not found — Objective Loop",
+      "description": null,
+      "canonical": null,
+      "h1Count": 1,
+      "h1": [
+        "This page is not in the notebook"
+      ],
+      "header": 1,
+      "main": 1,
+      "footer": 1,
+      "privacyLinks": 0,
+      "termsLinks": 0,
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 ()"
+      ]
+    }
+  },
+  "links": {
+    "https://api.sociobot.in/api/v1/products/learning-objective-loop/checkout": {
+      "kind": "external",
+      "checked": false
+    },
+    "https://en.wikipedia.org/wiki/Season": {
+      "kind": "external",
+      "checked": false
+    },
+    "https://learning-objective-loop.sociobot.in/": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/"
+    },
+    "https://learning-objective-loop.sociobot.in/#main": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/#main"
+    },
+    "https://learning-objective-loop.sociobot.in/data": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/data"
+    },
+    "https://learning-objective-loop.sociobot.in/data#main": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/data#main"
+    },
+    "https://learning-objective-loop.sociobot.in/data?demo=1": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/data?demo=1"
+    },
+    "https://learning-objective-loop.sociobot.in/demo": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/demo"
+    },
+    "https://learning-objective-loop.sociobot.in/demo#main": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/demo#main"
+    },
+    "https://learning-objective-loop.sociobot.in/new-objective": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/new-objective"
+    },
+    "https://learning-objective-loop.sociobot.in/new-objective#main": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/new-objective#main"
+    },
+    "https://learning-objective-loop.sociobot.in/new-objective?demo=1": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/new-objective?demo=1"
+    },
+    "https://learning-objective-loop.sociobot.in/objectives": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/objectives"
+    },
+    "https://learning-objective-loop.sociobot.in/objectives#main": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/objectives#main"
+    },
+    "https://learning-objective-loop.sociobot.in/objectives/demo-cells?demo=1": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/objectives/demo-cells?demo=1"
+    },
+    "https://learning-objective-loop.sociobot.in/objectives/demo-escape?demo=1": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/objectives/demo-escape?demo=1"
+    },
+    "https://learning-objective-loop.sociobot.in/objectives/demo-seasons?demo=1": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/objectives/demo-seasons?demo=1"
+    },
+    "https://learning-objective-loop.sociobot.in/objectives/demo-seasons?demo=1#main": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/objectives/demo-seasons?demo=1#main"
+    },
+    "https://learning-objective-loop.sociobot.in/objectives?demo=1": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/objectives?demo=1"
+    },
+    "https://learning-objective-loop.sociobot.in/privacy": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/privacy"
+    },
+    "https://learning-objective-loop.sociobot.in/privacy#main": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/privacy#main"
+    },
+    "https://learning-objective-loop.sociobot.in/privacy?demo=1": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/privacy?demo=1"
+    },
+    "https://learning-objective-loop.sociobot.in/terms": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/terms"
+    },
+    "https://learning-objective-loop.sociobot.in/terms#main": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/terms#main"
+    },
+    "https://learning-objective-loop.sociobot.in/terms?demo=1": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/terms?demo=1"
+    },
+    "https://learning-objective-loop.sociobot.in/today": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/today"
+    },
+    "https://learning-objective-loop.sociobot.in/today#main": {
+      "kind": "internal",
+      "status": 200,
+      "ok": true,
+      "finalUrl": "https://learning-objective-loop.sociobot.in/today#main"
+    },
+    "mailto:privacy@sociobot.in": {
+      "kind": "external",
+      "checked": false
+    }
+  },
+  "navigation": {
+    "afterClick": {
+      "url": "https://learning-objective-loop.sociobot.in/data",
+      "focused": "H1:Your learning record belongs to you",
+      "announcer": "Your learning record belongs to you page."
+    },
+    "afterBack": {
+      "url": "https://learning-objective-loop.sociobot.in/",
+      "focused": "H1:Plan reviews around your learning objectives"
+    }
+  },
+  "icons": {
+    "favicon": "/icons/icon.svg",
+    "apple": "/icons/icon-192.png",
+    "ogImage": "https://learning-objective-loop.sociobot.in/assets/objective-loop-social.webp",
+    "twitterCard": "summary_large_image",
+    "lang": "en"
+  }
+}

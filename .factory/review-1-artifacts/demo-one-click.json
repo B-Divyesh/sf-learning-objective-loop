@@ -1,0 +1,27 @@
+{
+  "initial": {
+    "url": "https://learning-objective-loop.sociobot.in/demo",
+    "banner": true,
+    "objectives": "3\nactive objectives",
+    "sampleQuestion": true,
+    "dbs": [
+      {
+        "name": "objective-loop",
+        "version": 1
+      },
+      {
+        "name": "objective-loop-demo",
+        "version": 1
+      }
+    ],
+    "localStorage": []
+  },
+  "mutated": true,
+  "resetToast": true,
+  "removedAfterReset": true,
+  "offlineSample": true,
+  "requestOrigins": [
+    "https://learning-objective-loop.sociobot.in"
+  ],
+  "consoleErrors": []
+}

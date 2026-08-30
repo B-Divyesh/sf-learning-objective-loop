@@ -1,0 +1,12 @@
+{
+  "privateAbsentInDemo": true,
+  "privatePresentAfterDemo": true,
+  "demoAbsentAfterExit": true,
+  "dbs": [
+    {
+      "name": "objective-loop",
+      "version": 1
+    }
+  ],
+  "localStorage": []
+}

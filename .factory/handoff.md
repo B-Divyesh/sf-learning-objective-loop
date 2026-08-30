@@ -1,44 +1,55 @@
-# Objective Loop — verification 7 handoff
+# Objective Loop — adversarial review 1 handoff
 
-## Status: PASS
+## Status: FAIL
 
-Independent QA accepted candidate
-`1ef62dcf4196a888f91c65cf7812f6930e433592` at
-<https://learning-objective-loop.sociobot.in> on 2026-08-30 UTC. The deployed
-artifact exactly matches the candidate build: 19 published files matched
-byte-for-byte; live `index.html` SHA-256 is
-`965741b4273c8fbd61dcc9060784ab3a2bef55ab4cd742c360fabbc1594925dd`.
+Completed the requested independent, read-only product review of
+<https://learning-objective-loop.sociobot.in> on 2026-08-30. Product source was
+not changed. The full report is `.factory/review-1.md`; supporting screenshots
+and machine-readable observations are in `.factory/review-1-artifacts/`.
 
-All ten required claims passed from a clean install and demo context. `npm test`
-passed 8/8, `npm run build` passed and produced `dist/`, and `npm run test:e2e`
-passed 24/24. The service-worker update/offline regression passed 5 consecutive
-times. There is no repository lint script/configuration; TypeScript checking is
-part of the production build.
+The cold first read, one-click populated demo, reset, offline reload, real/demo
+storage isolation, valid-route crawl, keyboard history/focus, accessibility,
+and distinct visual identity all passed. All ten commands in
+`.factory/claims.json` also exited successfully from a clean clone.
 
-Live QA confirmed the cold first screen says what the app does, who it is for,
-and offers the one-click sample demo. Desktop and 390 px mobile checks passed,
-including keyboard focus, reduced motion, demo isolation, offline reload, axe
-serious/critical findings (none), console/page errors (none), and core request
-privacy (same origin only). Lighthouse mobile: performance 92, accessibility
-100, best practices 100, SEO 100; FCP 0.9 s, LCP 1.1 s, CLS 0.
+The verdict remains FAIL because the review contains 36 findings. The four
+blocking findings are incomplete claim regressions: the objective workflow
+does not assert the promised date, demo isolation does not protect pre-existing
+real data in its tagged test, paid tests do not verify the sold reports/print
+output, and the broad core-privacy claim is exercised by only one narrow flow.
+The report also records unlisted privacy/restore/capability claims, missing
+landing structure, route-title and 404 gaps, and plain-language issues.
 
-The production checkout returned 303 to hosted Dodo checkout. Invalid license
-verification returned the documented invalid response and CORS policy. The API
-accepted 30 verification requests from one client, then returned 429 with
-`Retry-After: 4`.
+## Verification run
 
-Run:
+From the working tree:
 
-```sh
-npm ci
-npm test
-npm run build
-npm run test:e2e
-npm run verify:live
-npm run test:live
+```text
+npm test          PASS — 8/8
+npm run build     PASS — dist/ produced; JS 14.87 KB gzip
+npm run test:e2e  PASS — 24/24
 ```
 
-Use <https://learning-objective-loop.sociobot.in/demo> for the isolated sample;
-**Reset demo** restores it and **Start for real** discards it. No known
-release-blocking gaps remain. Full evidence and the severity list (none) are in
-`.factory/verification-7.md`.
+From clean clone `/tmp/objective-loop-review-1.lTX6Zk`, every exact command in
+`.factory/claims.json` passed (one selected test per command). Coverage defects
+are documented separately from command exit status in F-1-1 through F-1-4.
+
+Live checks:
+
+- `/opt/fleet/lib/verify-url.sh` passed with no console errors, one H1, English
+  language, a main landmark, complete image alt text, and named buttons.
+- Playwright axe found zero WCAG 2 A/AA violations on the landing, demo, data,
+  privacy, terms, objective deep link, and 404 routes.
+- All discovered internal links returned 200. The unknown route returned the
+  designed 404 with HTTP 404. Wikipedia returned 200; the Sociobot checkout
+  endpoint returned 303 to hosted Dodo checkout.
+- The live demo used only the product origin, reloaded offline, reset correctly,
+  and preserved a real objective created before entering demo mode.
+
+## Known gaps and next steps
+
+Resolve every finding in `.factory/review-1.md`, beginning with F-1-1 through
+F-1-4. Register every remaining product/privacy claim, strengthen the tagged
+tests, complete the landing skeleton, correct route/404 metadata and footer
+consistency, then apply the proposed copy and button rewrites. Re-run the entire
+review from a new clone; do not treat this as a diff-only checklist.

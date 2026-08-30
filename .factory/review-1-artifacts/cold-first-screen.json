@@ -1,0 +1,224 @@
+{
+  "mobile": {
+    "status": 200,
+    "url": "https://learning-objective-loop.sociobot.in/",
+    "title": "Objective Loop — explainable learning reviews",
+    "visibleText": "Skip to main content\nOBJECTIVE LOOP\nLOCAL · PRIVATE\n◐\nReview\n0\nObjective map\nData & access\n＋\nNew objective\n\nOBJECTIVE-AWARE STUDY REVIEWS\n\nPlan reviews around your learning objectives\n\nFor self-learners who use AI or other materials and need recall prompts tied to goals they can explain.\n\nStart with one outcome you want to demonstrate. Add a short-answer prompt, then let each answer set the next review date.\n\nTry it with sample data\nOpens three sample objectives and their due prompts.\nCreate your first objective\nWorks offline after the first visit.\nStudy content stays in this browser.\nCore notebook free; Study archive $19 once.\n01\nState an objective\n02\nWrite a recall prompt\n03\nReview with evidence\nOriginal AI-generated field-guide artwork.\nPrivacy · Terms · Built by Param Factory · build 1.0.1-repair-6",
+    "firstScreenText": [
+      {
+        "tag": "SPAN",
+        "text": "Loop",
+        "top": 20,
+        "bottom": 41
+      },
+      {
+        "tag": "SPAN",
+        "text": "Local · private",
+        "top": 20,
+        "bottom": 43
+      },
+      {
+        "tag": "SPAN",
+        "text": "◐",
+        "top": 19,
+        "bottom": 42
+      },
+      {
+        "tag": "SPAN",
+        "text": "Review",
+        "top": 808,
+        "bottom": 821
+      },
+      {
+        "tag": "SPAN",
+        "text": "0",
+        "top": 803,
+        "bottom": 820
+      },
+      {
+        "tag": "SPAN",
+        "text": "Objective map",
+        "top": 808,
+        "bottom": 821
+      },
+      {
+        "tag": "SPAN",
+        "text": "Data & access",
+        "top": 808,
+        "bottom": 821
+      },
+      {
+        "tag": "SPAN",
+        "text": "＋",
+        "top": 808,
+        "bottom": 836
+      },
+      {
+        "tag": "P",
+        "text": "Objective-aware study reviews",
+        "top": 189,
+        "bottom": 208
+      },
+      {
+        "tag": "H1",
+        "text": "Plan reviews around your learning objectives",
+        "top": 220,
+        "bottom": 321
+      },
+      {
+        "tag": "P",
+        "text": "For self-learners who use AI or other materials and need recall prompts tied to goals they can explain.",
+        "top": 329,
+        "bottom": 396
+      },
+      {
+        "tag": "P",
+        "text": "Start with one outcome you want to demonstrate. Add a short-answer prompt, then let each answer set the next review date.",
+        "top": 408,
+        "bottom": 487
+      },
+      {
+        "tag": "A",
+        "text": "Try it with sample data",
+        "top": 499,
+        "bottom": 543
+      },
+      {
+        "tag": "SPAN",
+        "text": "Opens three sample objectives and their due prompts.",
+        "top": 555,
+        "bottom": 573
+      },
+      {
+        "tag": "A",
+        "text": "Create your first objective",
+        "top": 585,
+        "bottom": 629
+      },
+      {
+        "tag": "LI",
+        "text": "Works offline after the first visit.",
+        "top": 670,
+        "bottom": 692
+      },
+      {
+        "tag": "LI",
+        "text": "Study content stays in this browser.",
+        "top": 692,
+        "bottom": 714
+      },
+      {
+        "tag": "LI",
+        "text": "Core notebook free; Study archive $19 once.",
+        "top": 714,
+        "bottom": 736
+      },
+      {
+        "tag": "SPAN",
+        "text": "01",
+        "top": 808,
+        "bottom": 828
+      }
+    ],
+    "requests": [
+      "https://learning-objective-loop.sociobot.in/",
+      "https://learning-objective-loop.sociobot.in/assets/index-Cj1tgOoA.js",
+      "https://learning-objective-loop.sociobot.in/assets/index-CqSTZ5Rk.css",
+      "https://learning-objective-loop.sociobot.in/assets/objective-field-map-720.427b472e8f53.webp"
+    ],
+    "consoleErrors": []
+  },
+  "desktop": {
+    "status": 200,
+    "url": "https://learning-objective-loop.sociobot.in/",
+    "title": "Objective Loop — explainable learning reviews",
+    "visibleText": "Skip to main content\nOBJECTIVE LOOP\nLOCAL · PRIVATE\n◐\nReview\n0\nObjective map\nData & access\n＋\nNew objective\n\nNothing leaves this device unless you choose to export it.\n\nOBJECTIVE-AWARE STUDY REVIEWS\n\nPlan reviews around your learning objectives\n\nFor self-learners who use AI or other materials and need recall prompts tied to goals they can explain.\n\nStart with one outcome you want to demonstrate. Add a short-answer prompt, then let each answer set the next review date.\n\nTry it with sample data\nOpens three sample objectives and their due prompts.\nCreate your first objective\nWorks offline after the first visit.\nStudy content stays in this browser.\nCore notebook free; Study archive $19 once.\n01\nState an objective\n02\nWrite a recall prompt\n03\nReview with evidence\nOriginal AI-generated field-guide artwork.\nPrivacy · Terms · Built by Param Factory · build 1.0.1-repair-6",
+    "firstScreenText": [
+      {
+        "tag": "SPAN",
+        "text": "Loop",
+        "top": 23,
+        "bottom": 48
+      },
+      {
+        "tag": "SPAN",
+        "text": "Local · private",
+        "top": 26,
+        "bottom": 45
+      },
+      {
+        "tag": "SPAN",
+        "text": "◐",
+        "top": 23,
+        "bottom": 46
+      },
+      {
+        "tag": "SPAN",
+        "text": "Review",
+        "top": 116,
+        "bottom": 141
+      },
+      {
+        "tag": "SPAN",
+        "text": "0",
+        "top": 114,
+        "bottom": 143
+      },
+      {
+        "tag": "SPAN",
+        "text": "Objective map",
+        "top": 172,
+        "bottom": 197
+      },
+      {
+        "tag": "SPAN",
+        "text": "Data & access",
+        "top": 228,
+        "bottom": 253
+      },
+      {
+        "tag": "P",
+        "text": "Objective-aware study reviews",
+        "top": 209,
+        "bottom": 228
+      },
+      {
+        "tag": "H1",
+        "text": "Plan reviews around your learning objectives",
+        "top": 236,
+        "bottom": 639
+      },
+      {
+        "tag": "P",
+        "text": "For self-learners who use AI or other materials and need recall prompts tied to goals they can explain.",
+        "top": 651,
+        "bottom": 732
+      },
+      {
+        "tag": "P",
+        "text": "Start with one outcome you want to demonstrate. Add a short-answer prompt, then let each answer set the next review date.",
+        "top": 749,
+        "bottom": 823
+      },
+      {
+        "tag": "A",
+        "text": "Try it with sample data",
+        "top": 839,
+        "bottom": 883
+      },
+      {
+        "tag": "SPAN",
+        "text": "Opens three sample objectives and their due prompts.",
+        "top": 895,
+        "bottom": 950
+      }
+    ],
+    "requests": [
+      "https://learning-objective-loop.sociobot.in/",
+      "https://learning-objective-loop.sociobot.in/assets/index-Cj1tgOoA.js",
+      "https://learning-objective-loop.sociobot.in/assets/index-CqSTZ5Rk.css",
+      "https://learning-objective-loop.sociobot.in/assets/objective-field-map.e409d0f7909f.webp"
+    ],
+    "consoleErrors": []
+  }
+}
