@@ -3,23 +3,9 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join, relative, resolve, sep } from 'node:path';
 
 const origin = process.env.LIVE_ORIGIN || 'https://learning-objective-loop.sociobot.in';
-const checkout = 'https://api.sociobot.in/api/v1/products/learning-objective-loop/checkout';
-const verificationEndpoint = 'https://api.sociobot.in/api/v1/products/learning-objective-loop/verify?license=invalid-live-probe';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
-}
-
-const licenseHeaders = { Origin: origin, 'Cache-Control': 'no-store' };
-const retryAfterMs = (value) => Math.max(1_000, (Number(value) || 1) * 1_000);
-
-async function invalidLicenseRequest() {
-  let response = await fetch(verificationEndpoint, { headers: licenseHeaders });
-  if (response.status === 429) {
-    await new Promise((resolve) => setTimeout(resolve, retryAfterMs(response.headers.get('retry-after'))));
-    response = await fetch(verificationEndpoint, { headers: licenseHeaders });
-  }
-  return response;
 }
 
 const root = await fetch(`${origin}/`, { cache: 'no-store' });
@@ -49,38 +35,7 @@ for (const path of ['/', '/index.html', '/today', '/demo', '/data', '/privacy', 
 
 const missing = await fetch(`${origin}/definitely-missing-verifier-route`, { cache: 'no-store' });
 assert(missing.status === 404, `missing route returned ${missing.status}`);
-assert((await missing.text()).includes('This page is not in the notebook'), 'missing route did not serve the designed 404 page');
-
-const checkoutResponse = await fetch(checkout, { redirect: 'manual' });
-assert(checkoutResponse.status === 303, `checkout returned ${checkoutResponse.status}`);
-const checkoutLocation = checkoutResponse.headers.get('location');
-assert(checkoutLocation?.startsWith('https://checkout.dodopayments.com/session/'), 'checkout did not redirect to the hosted provider');
-
-const verifyResponse = await invalidLicenseRequest();
-assert(verifyResponse.status === 200, `license verification returned ${verifyResponse.status}`);
-const verdict = await verifyResponse.json();
-assert(verdict.valid === false && verdict.reason === 'invalid', 'invalid license was not rejected');
-assert(verifyResponse.headers.get('access-control-allow-origin') === origin, 'license verification CORS does not allow the product origin');
-
-async function verifyBillingRateLimit() {
-  // The billing service allows thirty verification requests per client window.
-  // The successful contract verification above is request one in that window.
-  let accepted = 1;
-  for (let attempt = 2; attempt <= 35; attempt += 1) {
-    const response = await fetch(verificationEndpoint, { headers: licenseHeaders });
-    if (response.status === 200) {
-      accepted += 1;
-      continue;
-    }
-    assert(response.status === 429, `license verification request ${attempt} returned ${response.status}, not 429`);
-    const retryAfter = response.headers.get('retry-after');
-    assert(retryAfter && Number(retryAfter) > 0, 'license verification rate limit has no valid Retry-After');
-    return { accepted, retryAfter };
-  }
-  throw new Error('license verification did not rate limit within 35 requests');
-}
-
-const rateLimit = await verifyBillingRateLimit();
+assert((await missing.text()).includes('<h1>Page not found</h1>'), 'missing route did not serve the designed 404 page');
 
 const dist = resolve('dist');
 const files = [];
@@ -109,5 +64,4 @@ assert(digest(localIndex) === digest(liveIndex), 'live index.html does not match
 console.log(`live verification passed: ${origin}`);
 console.log(`index sha256: ${digest(liveIndex)}`);
 console.log(`artifact identity: ${files.length - 1} files matched`);
-console.log(`checkout: ${checkoutResponse.status} ${new URL(checkoutLocation).host}`);
-console.log(`license verification rate limit: ${rateLimit.accepted} accepted before 429; Retry-After ${rateLimit.retryAfter}s`);
+console.log('billing endpoints are exercised by intercepted browser claim fixtures, not this product-only live check');
