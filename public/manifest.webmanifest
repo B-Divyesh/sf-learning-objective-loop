@@ -1,9 +1,9 @@
 {
-  "id": "/?source=pwa",
+  "id": "/today?source=pwa",
   "name": "Objective Loop",
   "short_name": "Obj. Loop",
   "description": "Objective-aware recall prompts with an explainable review schedule.",
-  "start_url": "/?v=1#/today",
+  "start_url": "/today?v=2",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

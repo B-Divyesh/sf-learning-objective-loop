@@ -37,7 +37,7 @@ test('precache survives a service-worker update and an offline reload', async ({
     await context.setOffline(true);
     await page.getByRole('button', { name: 'Reload update' }).click();
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.getByRole('heading', { name: /Objective Loop/i, level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Plan reviews around your learning objectives', level: 1 })).toBeVisible();
     await expect(page.getByText(/Offline · saved here/i)).toBeAttached();
   } finally {
     await writeFile(workerPath, originalWorker);

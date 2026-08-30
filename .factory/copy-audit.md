@@ -12,20 +12,22 @@ contains a banned marketing word, and no sentence exceeds 22 words.
 | Data & access | 3 | Navigation |
 | New objective | 2 | Action |
 | Nothing leaves this device unless you choose to export it. | 10 | Privacy fact |
-| Your first loop | 3 | Section label |
-| Turn an intention into a review you can explain. | 9 | Job headline |
-| Start with one outcome you want to be able to demonstrate. | 11 | First-use guidance |
-| Add your own short-answer prompt, then let each answer set the next review date. | 14 | First-use guidance |
+| Objective-aware study reviews | 3 | Section label |
+| Plan reviews around your learning objectives | 6 | Job headline |
+| For self-learners who use AI or other materials and need recall prompts tied to goals they can explain. | 18 | Audience and situation |
+| Start with one outcome you want to demonstrate. | 9 | First-use guidance |
+| Add a short-answer prompt, then let each answer set the next review date. | 12 | First-use guidance |
 | State an objective | 3 | Step |
 | Write a recall prompt | 4 | Step |
 | Review with evidence | 3 | Step |
 | Try it with sample data | 5 | Primary action |
+| Opens three sample objectives and their due prompts. | 8 | Primary-action result |
 | Create your first objective | 4 | Real-data action |
 | Works offline after the first visit. | 6 | Offline fact |
 | Study content stays in this browser. | 6 | Privacy fact |
 | Core notebook free; Study archive $19 once. | 7 | Price fact |
-| Made for deliberate learners. | 4 | Audience |
 | Original AI-generated field-guide artwork. | 4 | Asset disclosure |
+| Built by Param Factory | 4 | Footer provenance |
 | Privacy | 1 | Legal link |
 | Terms | 1 | Legal link |
 

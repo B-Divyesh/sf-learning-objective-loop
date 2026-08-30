@@ -10,6 +10,27 @@ const FALLBACK_KEY = 'objective-loop:state';
 const dbName = (scope: StorageScope): string => scope === 'demo' ? `${DB_NAME}-demo` : DB_NAME;
 const fallbackKey = (scope: StorageScope): string => scope === 'demo' ? `demo:${FALLBACK_KEY}` : FALLBACK_KEY;
 
+/** Evidence is rendered as an outbound link, so only ordinary web protocols
+ * may enter either local storage or an imported backup. */
+export function isAllowedEvidenceUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+function discardUnsafeStoredEvidence(state: AppState): AppState {
+  state.objectives.forEach((objective) => {
+    if (Array.isArray(objective.evidence)) {
+      objective.evidence = objective.evidence.filter((evidence) => isAllowedEvidenceUrl(evidence?.url));
+    }
+  });
+  return state;
+}
+
 export const emptyState = (): AppState => ({
   version: 1,
   objectives: [],
@@ -37,10 +58,10 @@ export async function loadState(scope: StorageScope = 'real'): Promise<AppState>
       request.onerror = () => reject(request.error);
     });
     db.close();
-    return state || emptyState();
+    return state ? discardUnsafeStoredEvidence(state) : emptyState();
   } catch {
     const fallback = localStorage.getItem(fallbackKey(scope));
-    return fallback ? (JSON.parse(fallback) as AppState) : emptyState();
+    return fallback ? discardUnsafeStoredEvidence(JSON.parse(fallback) as AppState) : emptyState();
   }
 }
 
@@ -75,5 +96,8 @@ export function validateState(value: unknown): AppState {
   if (candidate.version !== 1 || !Array.isArray(candidate.objectives) || !Array.isArray(candidate.prompts)) {
     throw new Error('This export version is not supported.');
   }
+  const unsafeEvidence = candidate.objectives.some((objective) => Array.isArray(objective.evidence)
+    && objective.evidence.some((evidence) => !isAllowedEvidenceUrl(evidence?.url)));
+  if (unsafeEvidence) throw new Error('This backup contains an evidence link that is not an HTTP(S) web address.');
   return candidate as AppState;
 }

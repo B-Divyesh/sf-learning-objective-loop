@@ -2,6 +2,72 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readFile } from 'node:fs/promises';
 
+test('uses a concrete first-screen headline and names self-learners at desktop and 390px', async ({ page }) => {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Plan reviews around your learning objectives', level: 1 })).toBeVisible();
+    await expect(page.getByText('For self-learners who use AI or other materials and need recall prompts tied to goals they can explain.')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Try it with sample data' })).toBeVisible();
+    await expect(page.getByText('Opens three sample objectives and their due prompts.')).toBeVisible();
+    await expect(page.locator('main h1')).toHaveCount(1);
+  }
+});
+
+test('uses real routes with route titles, focus, and an announcement after keyboard navigation', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Data & access' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/data$/);
+  const heading = page.getByRole('heading', { name: 'Your learning record belongs to you', level: 1 });
+  await expect(heading).toBeFocused();
+  await expect(page).toHaveTitle('Data & access — Objective Loop');
+  await expect(page.locator('#route-announcer')).toHaveText('Your learning record belongs to you page.');
+  await page.goBack();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { name: 'Plan reviews around your learning objectives', level: 1 })).toBeFocused();
+
+  await page.goto('/privacy');
+  await expect(page).toHaveTitle('Privacy — Objective Loop');
+  await expect(page.getByRole('heading', { name: 'Privacy', level: 1 })).toHaveCount(1);
+  await page.goto('/terms');
+  await expect(page).toHaveTitle('Terms — Objective Loop');
+  await expect(page.getByRole('heading', { name: 'Terms', level: 1 })).toHaveCount(1);
+  expect(consoleErrors).toEqual([]);
+});
+
+test('ships social metadata, a Param Factory footer, and a designed static 404', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/$/);
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Objective Loop/);
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /objective-loop-social\.webp$/);
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
+  await expect(page.getByText(/Built by Param Factory · build 1\.0\.1-repair-5/)).toBeVisible();
+  await page.goto('/404.html');
+  await expect(page.getByRole('heading', { name: 'This page is not in the notebook', level: 1 })).toBeVisible();
+  await expect(page).toHaveTitle('Page not found — Objective Loop');
+});
+
+test('rejects non-HTTP(S) evidence links before persistence', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Create your first objective' }).click();
+  await page.getByLabel('Objective *').fill('Explain safe evidence links');
+  await page.getByRole('button', { name: 'Save objective' }).click();
+  const address = page.getByLabel('Web address');
+  await page.locator('form[data-form="evidence"]').evaluate((form: HTMLFormElement) => { form.noValidate = true; });
+  for (const unsafeUrl of ['javascript:alert(document.domain)', 'data:text/html,<h1>test</h1>']) {
+    await address.fill(unsafeUrl);
+    await page.getByRole('button', { name: 'Attach evidence' }).click();
+    await expect(page.locator('form[data-form="evidence"] [role="alert"]')).toHaveText('Use an HTTP(S) web address, such as https://example.com.');
+    await expect(address).toBeFocused();
+    await expect(page.locator('.evidence-list a')).toHaveCount(0);
+  }
+  await page.reload();
+  await expect(page.locator('.evidence-list a')).toHaveCount(0);
+});
+
 test('@claim:objective-review-workflow creates an objective, prompt, and review with an explained next date', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Create your first objective' }).click();
@@ -172,7 +238,7 @@ test('@claim:demo-sandbox opens sample data in one click without touching real d
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await page.getByRole('link', { name: 'Try it with sample data' }).click();
-  await expect(page).toHaveURL(/\?demo=1#\/today$/);
+  await expect(page).toHaveURL(/\/demo$/);
   await expect(page.getByText('Demo — sample data, nothing is saved to your notebook.')).toBeVisible();
   await expect(page.locator('.metric-strip div').filter({ hasText: 'active objectives' }).getByText('3')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Why is it summer in Australia when it is winter in Europe?' })).toBeVisible();
@@ -186,7 +252,7 @@ test('@claim:demo-sandbox opens sample data in one click without touching real d
   await expect(page.getByText('Demo sample restored.')).toBeVisible();
   await expect(page.getByText('Demo-only objective')).toHaveCount(0);
   await page.getByRole('button', { name: 'Start for real' }).click();
-  await expect(page).toHaveURL(/\/#\/today$/);
+  await expect(page).toHaveURL(/\/today$/);
   await expect(page.getByRole('link', { name: 'Try it with sample data' })).toBeVisible();
   await expect(page.getByText('Demo-only objective')).toHaveCount(0);
   await page.goto('/?demo=1#/today');
@@ -287,7 +353,7 @@ test('exposes an installable standalone manifest without parse errors', async ({
   expect(manifest.errors).toEqual([]);
   const data = JSON.parse(manifest.data || '{}') as { display?: string; start_url?: string; icons?: Array<{ sizes?: string; purpose?: string }> };
   expect(data.display).toBe('standalone');
-  expect(data.start_url).toMatch(/^\/\?v=\d+#\/today$/);
+  expect(data.start_url).toMatch(/^\/today\?v=\d+$/);
   expect(data.icons?.some((icon) => icon.sizes === '192x192')).toBeTruthy();
   expect(data.icons?.some((icon) => icon.sizes === '512x512')).toBeTruthy();
   expect(data.icons?.some((icon) => icon.purpose?.includes('maskable'))).toBeTruthy();
@@ -317,7 +383,7 @@ test('@claim:verified-license stores a returned license, strips it from the URL,
   });
 
   await page.goto('/?license=paid-license-token#/data');
-  await expect(page).toHaveURL(/\/#\/data$/);
+  await expect(page).toHaveURL(/\/data$/);
   await expect(page.getByText('Study archive · unlocked')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('sb_license:learning-objective-loop'))).toBe('paid-license-token');
   expect(verificationRequests).toBe(1);
@@ -357,12 +423,12 @@ test('@claim:private-core keeps populated objective links at least 44px tall on 
 });
 
 test('@claim:offline-reload reloads while offline after the service worker controls the page', async ({ page, context }) => {
-  await page.goto('/?demo=1#/today');
+  await page.goto('/demo');
   await page.waitForFunction(() => navigator.serviceWorker?.ready);
   await page.reload();
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { name: /Objective Loop/i, level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /prompts are due/i, level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Why is it summer in Australia when it is winter in Europe?' })).toBeVisible();
   await expect(page.getByText('Demo — sample data, nothing is saved to your notebook.')).toBeVisible();
   await expect(page.getByText(/Offline · saved here/i)).toBeAttached();

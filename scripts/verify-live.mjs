@@ -29,10 +29,14 @@ for (const attribute of entry) {
   assert(response.headers.get('cache-control')?.includes('immutable'), `${path} is not immutable`);
 }
 
-for (const path of ['/', '/index.html', '/sw.js', '/manifest.webmanifest', '/privacy/', '/terms/', '/offline.html']) {
+for (const path of ['/', '/index.html', '/today', '/demo', '/data', '/privacy', '/terms', '/sw.js', '/manifest.webmanifest', '/offline.html', '/404.html']) {
   const response = await fetch(`${origin}${path}`, { cache: 'no-store' });
   assert(response.status === 200, `${path} returned ${response.status}`);
 }
+
+const missing = await fetch(`${origin}/definitely-missing-verifier-route`, { cache: 'no-store' });
+assert(missing.status === 404, `missing route returned ${missing.status}`);
+assert((await missing.text()).includes('This page is not in the notebook'), 'missing route did not serve the designed 404 page');
 
 const checkoutResponse = await fetch(checkout, { redirect: 'manual' });
 assert(checkoutResponse.status === 303, `checkout returned ${checkoutResponse.status}`);

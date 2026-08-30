@@ -7,21 +7,24 @@ const staticAppShell = [
   '/',
   '/index.html',
   '/offline.html',
+  '/404.html',
+  '/404.css',
   '/manifest.webmanifest',
-  '/privacy/index.html',
-  '/terms/index.html',
   '/icons/icon.svg',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-maskable-512.png',
   '/assets/objective-field-map.e409d0f7909f.webp',
   '/assets/objective-field-map-720.427b472e8f53.webp',
+  '/assets/objective-loop-social.webp',
 ];
 
 function serviceWorkerSource(cacheName: string, assets: string[]): string {
   return `const CACHE = '${cacheName}';
 const CACHE_PREFIX = 'objective-loop-shell-';
 const ASSETS = ${JSON.stringify(assets)};
+const APP_PATHS = new Set(['/', '/today', '/demo', '/objectives', '/new-objective', '/data', '/privacy', '/terms']);
+const isAppNavigation = (pathname) => APP_PATHS.has(pathname) || pathname.startsWith('/objectives/');
 const fromShellCache = async (request) => {
   const names = await caches.keys();
   const shellNames = [CACHE, ...names.filter((name) => name.startsWith(CACHE_PREFIX) && name !== CACHE).reverse()];
@@ -52,7 +55,7 @@ self.addEventListener('fetch', (event) => {
   // A worker must always revalidate its own script; serving a runtime-cached
   // copy here would prevent the browser from discovering the next release.
   if (url.pathname === '/sw.js') return;
-  if (event.request.mode === 'navigate') {
+  if (event.request.mode === 'navigate' && isAppNavigation(url.pathname)) {
     event.respondWith(fromShellCache('/index.html').then((cached) => cached || fetch(event.request)
       .catch(() => fromShellCache('/offline.html'))));
     return;
