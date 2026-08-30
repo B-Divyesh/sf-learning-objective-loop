@@ -648,6 +648,7 @@ test('commits prompt reviews and evidence before immediate navigation or reload 
     await page.getByLabel('Link label').fill(`Durable evidence ${attempt}`);
     await page.getByLabel('Web address').fill(evidence);
     await page.getByRole('button', { name: 'Attach evidence' }).click();
+    await expect(page.getByRole('link', { name: new RegExp(`Durable evidence ${attempt}.*opens external site`) })).toHaveAttribute('href', evidence);
     await page.getByLabel('Question *').fill(question);
     await page.getByLabel('Expected answer *').fill(`Durable answer ${attempt}.`);
     await page.getByRole('button', { name: 'Add to review queue' }).click();
