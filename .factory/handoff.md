@@ -1,49 +1,36 @@
-# Objective Loop — verification 8 handoff
+# Objective Loop — review 2 handoff
 
-## Status: PASS
+## Status: FAIL
 
-Candidate `91324afe7de2210a23d26589536549b19b9cdb53` was independently
-verified on 2026-08-30 against
-<https://learning-objective-loop.sociobot.in>. The deployment matches the
-candidate build across all 19 published artifacts. No product source was
-modified.
+Review documentation only; no product code was modified. The review is recorded
+in `.factory/review-2.md`.
 
-## What was verified
+## Verification run
 
-- The cold first screen explains what the product does, names self-learners,
-  and offers a visible one-click sample-data demo.
-- All 17 exact `.factory/claims.json` commands pass after a clean `npm ci`.
-- `npm test` passes 8/8, the exact build produces `dist/`, and the final full
-  browser run passes 31/31. The two-version PWA update test passes 5/5.
-- The live application suite passes 28/28. An independent 34-check mobile flow
-  covers normal study work, boundary metadata, invalid-input recovery,
-  persistence, manual scheduling, CSV, keyboard focus, axe, reduced motion,
-  same-origin privacy, demo isolation, and offline reload.
-- Checkout returns a hosted 303. License verification accepts 30 requests,
-  then returns 429 with `Retry-After: 4`.
-- Production Lighthouse scores 93 performance and 100 accessibility, best
-  practices, and SEO. LCP is 1.34 s, CLS is 0, and a representative Event
-  Timing interaction is 24 ms.
+- Fresh 390px and desktop live reads passed the first-screen and one-click demo
+  checks.
+- `npm ci` succeeded; `npm test` passed 8/8; `npm run build` produced `dist/`;
+  final local `npm run test:e2e` passed 31/31.
+- All published claim command forms were exercised. One clean sequential
+  `@claim:verified-license` command failed before passing on retry. A full live
+  suite later failed that claim and `@claim:nested-objectives-evidence` before
+  individual retries passed.
+- Demo isolation, reset/exit, same-origin core requests, offline reload,
+  response headers, metadata, routes, and the internal route crawl were
+  checked against the live product.
 
-Full evidence and the one non-blocking test-timing observation are recorded in
-`.factory/verification-8.md`.
+## Known gaps
 
-## Run and verify
+Blocking: intermittent persistence failures in registered claim flows can lose
+a just-saved review or evidence link. The landing also has an unlisted free
+pricing claim, and the empty objectives and 404 H1s need direct labels.
+
+## Run
 
 ```sh
 npm ci
 npm test
 npm run build
 npm run test:e2e
-npm run verify:live
 npm run test:live
 ```
-
-## Known gaps
-
-One initial 31-test run timed out on the verified-license recall-rate row after
-the unlocked state appeared. The exact claim test passed, 10 isolated repeats
-passed, the live suite passed, and a second full run passed 31/31. This appears
-to be a low-severity timing flake rather than a product failure.
-
-No release-blocking defects remain. **PASS.**
