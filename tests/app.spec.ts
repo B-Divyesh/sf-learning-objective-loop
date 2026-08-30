@@ -237,7 +237,7 @@ test('closes a review with Escape, keeps it closed on navigation, and restores f
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await page.getByRole('link', { name: /^Review/ }).click();
-  const reopenedTrigger = page.getByRole('button', { name: 'Review this prompt: What determines escape velocity?' });
+  const reopenedTrigger = page.getByRole('button', { name: /Review this prompt.*What determines escape velocity/ });
   await reopenedTrigger.click();
   await page.getByRole('button', { name: 'Close review' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
