@@ -55,7 +55,7 @@ test('ships social metadata, a Param Factory footer, and a designed static 404',
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Objective Loop/);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /objective-loop-social\.webp$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-  await expect(page.getByText(/Built by Param Factory · build 1\.0\.3-polish-2/)).toBeVisible();
+  await expect(page.getByText(/Built by Param Factory · build 1\.0\.4-repair-7/)).toBeVisible();
   await page.goto('/404.html');
   await expect(page.getByRole('heading', { name: 'Page not found', level: 1 })).toBeVisible();
   await expect(page).toHaveTitle('Page not found — Objective Loop');
@@ -63,6 +63,36 @@ test('ships social metadata, a Param Factory footer, and a designed static 404',
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /404\.html$/);
   await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Privacy' })).toBeVisible();
   await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Terms' })).toBeVisible();
+});
+
+test('keeps every rendered interactive target at least 44 by 44 CSS pixels on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const routes = ['/', '/today', '/demo', '/objectives', '/new-objective', '/data', '/privacy', '/terms', '/404.html'];
+
+  for (const route of routes) {
+    await page.goto(route);
+    await page.waitForLoadState('networkidle');
+
+    const undersized = await page.locator('a, button, input, textarea, select, summary').evaluateAll((targets) => targets.flatMap((target) => {
+      const box = target.getBoundingClientRect();
+      const style = getComputedStyle(target);
+      const isRendered = box.width > 0
+        && box.height > 0
+        && style.display !== 'none'
+        && style.visibility !== 'hidden'
+        && Number(style.opacity) > 0
+        && !target.closest('[aria-hidden="true"]');
+      if (!isRendered || (box.width >= 44 && box.height >= 44)) return [];
+      return [{
+        element: target.tagName.toLowerCase(),
+        name: (target.getAttribute('aria-label') || target.textContent || target.getAttribute('name') || '').trim().replace(/\s+/g, ' '),
+        width: Number(box.width.toFixed(1)),
+        height: Number(box.height.toFixed(1)),
+      }];
+    }));
+
+    expect(undersized, `${route} has undersized interactive targets`).toEqual([]);
+  }
 });
 
 test('rejects non-HTTP(S) evidence links before persistence', async ({ page }) => {

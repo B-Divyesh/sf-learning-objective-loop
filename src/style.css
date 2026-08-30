@@ -52,7 +52,15 @@ body {
 
 button, input, textarea, select { font: inherit; color: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
-a { color: var(--cobalt); text-underline-offset: 3px; }
+a {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--cobalt);
+  text-underline-offset: 3px;
+  vertical-align: middle;
+}
 a:hover { text-decoration-thickness: 2px; }
 button { cursor: pointer; }
 img { max-width: 100%; height: auto; display: block; }
