@@ -19,6 +19,7 @@ test('ships immutable asset caching and restrictive deployment policies', async 
   expect(config.globalHeaders['X-Frame-Options']).toBe('DENY');
   expect(config.routes.some((route) => route.route === '/data' && route.rewrite === '/index.html')).toBeTruthy();
   expect(config.routes.some((route) => route.route === '/objectives/*' && route.rewrite === '/index.html')).toBeTruthy();
+  expect(config.routes.find((route) => route.route === '/')?.headers?.['Cache-Control']).toContain('max-age=0');
   expect(config.responseOverrides['404']).toEqual({ rewrite: '/404.html', statusCode: 404 });
 
   await page.goto('/');
