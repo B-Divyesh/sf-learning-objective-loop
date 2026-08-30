@@ -335,6 +335,9 @@ test('keeps the private empty state accessible at 390px', async ({ page }) => {
   const navBoxes = await page.locator('.nav-item').evaluateAll((items) => items.map((item) => item.getBoundingClientRect()).map(({ left, right, height }) => ({ left, right, height })));
   expect(navBoxes.every(({ height }) => height >= 44)).toBeTruthy();
   expect(navBoxes.slice(1).every(({ left }, index) => left - navBoxes[index].right >= 8)).toBeTruthy();
+  const lastFact = await page.getByText('Core notebook free; Study archive $19 once.').boundingBox();
+  const dock = await page.locator('.side-nav').boundingBox();
+  expect(lastFact && dock && lastFact.y + lastFact.height <= dock.y).toBeTruthy();
 });
 
 test('@claim:private-core keeps populated objective links at least 44px tall on mobile', async ({ page }) => {
