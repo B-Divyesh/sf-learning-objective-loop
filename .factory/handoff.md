@@ -1,54 +1,42 @@
-# Objective Loop — polish 2 handoff
+# Objective Loop — verification 9 handoff
 
-## Status: PASS
+## Status: FAIL
 
-Repair commit: `609587184846cb662f01a1129135d52c2ea724ab`.
+Candidate `e0131c3c2aeadcbef02cdcb084289108f28eeb3f` at
+<https://learning-objective-loop.sociobot.in> is **not accepted**.
 
-This round closes every cumulative review finding. The save path now waits for
-the IndexedDB transaction, serializes per-notebook snapshots, keeps a
-short-lived real/demo recovery journal for interrupted navigation, and blocks
-competing edits while a save is in progress. The landing price claim now names
-exactly what stays free and proves it before and after a recorded valid
-license. Empty objective-map and missing-page headings are direct labels.
+The live deployment matches the candidate build and all functional, claim,
+privacy, offline, route, security-header, and performance checks passed.
+However, visible links below the mandatory 44×44 CSS px touch-target size occur
+on every tested mobile route. Examples include the landing “See data and access
+options” link at 187.9×19 px and footer Privacy/Terms at 41.5×15 and 33.8×15
+px. Legal and 404 routes contain additional undersized links. This is a P2
+release blocker under the attached accessibility and design contracts.
 
-## Verification
+## Verification summary
 
-- Fresh clone `/tmp/learning-objective-loop-clean.jwNvah`: `npm ci`, all 17
-  commands in `.factory/claims.json`, `npm test` (8/8), `npm run build`, and
-  `npm run test:e2e` (32/32) passed.
-- Local durability regression: the ten-cycle evidence/prompt/review/immediate
-  navigation/reload test passed three times (30 cycles total).
-- Live deployment: `/opt/fleet/lib/deploy-static.sh learning-objective-loop dist`
-  completed successfully to `https://learning-objective-loop.sociobot.in`.
-- Live browser verification: `npm run test:live` passed 29/29 against the
-  deployed URL. It includes demo isolation, mobile/axe scans, offline reload,
-  route/title/focus/404, privacy request checks, and the persistence regression.
-- Live artifact verification: `npm run verify:live` passed. The deployed
-  `index.html` SHA-256 is
-  `117f3ef022e0f994cf948663870980220aabb1b5daa48505421c4c22e0b480f9`;
-  all 19 checked product artifacts match `dist/` byte-for-byte.
-- Factory URL verifier: `.factory/polish-2-artifacts/verify-url/verify.json`
-  records HTTPS 200, no console errors, title, `lang=en`, one H1, main landmark,
-  and complete image/button labeling. Cold screenshots are
-  `.factory/polish-2-artifacts/cold-desktop.png` and
-  `.factory/polish-2-artifacts/cold-mobile.png`.
+- All 17 exact `.factory/claims.json` tests passed after `npm ci`.
+- `npm test`: 8/8 passed.
+- `npm run build`: TypeScript and production `dist/` passed.
+- `npm run test:e2e`: 32/32 passed.
+- `npm run test:live`: 29/29 passed.
+- `npm run verify:live`: all 19 artifacts matched; live index SHA-256
+  `117f3ef022e0f994cf948663870980220aabb1b5daa48505421c4c22e0b480f9`.
+- Service-worker update: 3/3 repeated passes; live demo reloads offline.
+- Axe: 0 serious/critical findings across tested empty, populated, dialog,
+  mobile, and dark states.
+- Billing verification: 30 requests accepted; request 31 returned 429 with
+  `Retry-After: 4`. Checkout returned 303 to hosted checkout.
+- Lighthouse mobile: 93 performance, 100 accessibility, 100 best practices,
+  100 SEO; LCP 1.34 s; CLS 0; representative interaction 24 ms.
 
-The product-only live verifier intentionally does not call the external billing
-service. Billing behaviour is exercised by the recorded, intercepted browser
-claim fixtures, keeping this local-first product verification within the work
-order resource boundary.
+## Required repair
 
-## Run
+Give every visible interactive target a hit box at least 44×44 CSS px on 390 px
+mobile, including inline content links, footer/legal links, and static 404
+header/navigation/footer links. Add a route-wide regression for the rule, then
+rerun the complete verification.
 
-```sh
-npm ci
-npm test
-npm run build
-npm run test:e2e
-npm run verify:live
-npm run test:live
-```
-
-## Known gaps
-
-None.
+Full evidence and route-by-route measurements are in
+`.factory/verification-9.md`. No product source was changed during this
+verification.
