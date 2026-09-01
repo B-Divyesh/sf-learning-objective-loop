@@ -1,6 +1,6 @@
-# Copy audit — polish 2
+# Copy audit — polish 3
 
-Audited 2026-08-30. Word counts treat hyphenated terms, `$19`, and URLs as one
+Audited 2026-09-01. Word counts treat hyphenated terms, `$19`, and URLs as one
 word. Every landing sentence is 22 words or fewer and uses no banned marketing
 language.
 
@@ -28,6 +28,7 @@ language.
 | Evidence links open only when you select them. | 8 | Privacy exception |
 | Core reviews, CSV, and backups stay free. | 7 | Paid boundary |
 | The one-time archive adds objective recall rates and printable weekly summaries. | 11 | Paid output |
+| Schedule recall reviews around clear learning objectives. | 7 | Catalog description |
 
 ## Terminology
 
