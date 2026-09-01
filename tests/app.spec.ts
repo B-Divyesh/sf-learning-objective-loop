@@ -55,7 +55,7 @@ test('ships social metadata, a Param Factory footer, and a designed static 404',
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Objective Loop/);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /objective-loop-social\.webp$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-  await expect(page.getByText(/Built by Param Factory · build 1\.0\.4-repair-7/)).toBeVisible();
+  await expect(page.getByText(/Built by Param Factory · build 1\.0\.5-polish-3/)).toBeVisible();
   await page.goto('/404.html');
   await expect(page.getByRole('heading', { name: 'Page not found', level: 1 })).toBeVisible();
   await expect(page).toHaveTitle('Page not found — Objective Loop');
