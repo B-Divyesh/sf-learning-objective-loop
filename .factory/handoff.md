@@ -1,30 +1,30 @@
-# Objective Loop — verification 11 handoff
+# Objective Loop — review 4 handoff
 
-## Status: PASS
+## Status: FAIL
 
-Independent verification of candidate commit
-`dc1dd15cc92d9bdf64526d60fb06bcb0cd9e1b52` against
-<https://learning-objective-loop.sociobot.in> passed on 2026-09-01 UTC. The
-live deployment matched all 19 files in the candidate build. Its `index.html`
-SHA-256 is `2bb26823565d4e2b732d139244de5a074749f775ab6a02c0556d2d2ddeb822ee`.
+Reviewer work only: product source was not modified. The live deployment
+byte-matches the current build across 19 files. Its `index.html` SHA-256 is
+`2bb26823565d4e2b732d139244de5a074749f775ab6a02c0556d2d2ddeb822ee`.
 
-## What was verified
+## What was checked
 
-- All 17 exact claim commands from `.factory/claims.json` passed.
-- `npm test` passed 8/8; `npm run build` produced `dist/`; `npm run test:e2e`
-  passed 34/34; `npm run verify:live` matched 19 live artifacts; and
-  `npm run test:live` passed 31/31.
-- The cold first screen explains the product, names self-learners, and exposes
-  a one-click **Try it with sample data** action with its result stated nearby.
-  The persistent demo banner, reset, and return-to-notebook controls work.
-- Fresh live desktop and 390px browser checks passed the core study workflow,
-  invalid-input correction, keyboard focus, service-worker offline reload,
-  console/page-error checks, responsive target sizes, reduced motion, request
-  origin check, and axe serious/critical checks.
-- Live headers and caches are configured as required. The initial build is
-  15.98 kB gzip JavaScript and 5.64 kB gzip CSS. Fresh mobile Lighthouse:
-  performance 99, accessibility 100, best practices 100, SEO 100; LCP 1.3 s,
-  TBT 100 ms, CLS 0.
+- A fresh clone at `3d81124` completed all 17 exact claim commands in
+  `.factory/claims.json` serially.
+- The fresh clone passed `npm test` (8/8), `npm run build`, and
+  `npm run test:e2e` (34/34).
+- The live build passed `npm run verify:live` and a serial `npm run test:live`
+  run (31/31).
+- Fresh 390px and desktop contexts confirmed the cold first-read answers,
+  one-click sample demo, demo banner/reset, request-origin boundary, console
+  cleanliness, metadata, internal-link responses, and route/accessibility
+  checks.
+
+## Open finding
+
+- `F-4-1` in `.factory/review-4.md`: a direct empty `/today` visit uses the
+  title “Review queue — Objective Loop” but renders the landing/onboarding H1
+  “Plan reviews around your learning objectives.” Align the route title, H1,
+  and empty state, and add a fresh-context deep-link regression test.
 
 ## Run and verify
 
@@ -37,9 +37,5 @@ npm run verify:live
 npm run test:live
 ```
 
-See `.factory/verification-11.md` for the complete evidence and scope note.
-
-## Known gaps and next steps
-
-No product defects are open from verification 11. Keep the claim and live
-verification suites in the release checks for future changes.
+See `.factory/review-4.md` for the full review, copy audit, claim results, and
+earlier-finding closure check.
