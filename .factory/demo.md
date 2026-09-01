@@ -1,6 +1,8 @@
 # Objective Loop demo sandbox
 
-- Demo URL: `/demo`.
+- Demo URLs: `/demo` and `/?demo=1`. Both open the same isolated sample
+  notebook with the persistent **Demo — sample data, nothing is saved to your
+  notebook** banner and **Reset demo** control.
 - First-use action: **Try it with sample data** opens the demo in one click. The
   persistent navigation also offers **Try sample data** when a real notebook is
   already populated.

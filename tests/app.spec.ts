@@ -314,7 +314,14 @@ test('@claim:demo-sandbox opens sample data in one click without touching real d
   await expect(page.getByText('Demo-only objective')).toHaveCount(0);
   await page.getByRole('link', { name: 'Objective map', exact: true }).click();
   await expect(page.getByRole('link', { name: /Private control objective/ })).toBeVisible();
+  await page.goto('/?demo=1');
+  await expect(page).toHaveURL(/\/\?demo=1$/);
+  await expect(page.getByText('Demo — sample data, nothing is saved to your notebook.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reset demo' })).toBeVisible();
+  await page.getByRole('button', { name: 'Reset demo' }).click();
+  await expect(page.getByText('Demo sample restored.')).toBeVisible();
   await page.goto('/?demo=1#/today');
+  await expect(page).toHaveURL(/\/demo\?demo=1$/);
   await expect(page.locator('.metric-strip div').filter({ hasText: 'active objectives' }).getByText('3')).toBeVisible();
   await expect(page.getByText('Demo-only objective')).toHaveCount(0);
 });
@@ -339,7 +346,15 @@ test('@claim:manual-override persists a visible manual date and restores the cal
   await expect(page.getByText('Stage 1', { exact: true })).toBeVisible();
 });
 
-test('@claim:one-time-price keeps reviews and both exports free before and after the $19 checkout handoff', async ({ page }) => {
+test('@claim:one-time-price keeps reviews and both exports free before and after the $19 checkout handoff', async ({ browser }, testInfo) => {
+  test.setTimeout(60_000);
+  const baseUrl = String(testInfo.project.use.baseURL || 'http://127.0.0.1:4173');
+  const appUrl = (path: string) => new URL(path, baseUrl).toString();
+  const newIsolatedContext = () => browser.newContext({
+    baseURL: baseUrl,
+    serviceWorkers: 'block',
+    viewport: { width: 1440, height: 900 },
+  });
   const checkout = 'https://api.sociobot.in/api/v1/products/learning-objective-loop/checkout';
   const verification = 'https://api.sociobot.in/api/v1/products/learning-objective-loop/verify?license=price-license-token';
   let checkoutRequests = 0;
@@ -354,8 +369,11 @@ test('@claim:one-time-price keeps reviews and both exports free before and after
   const hostedCheckout = `http://127.0.0.1:${address.port}/hosted-checkout`;
 
   try {
-    await page.route(verification, (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"valid":true,"reason":"ok"}' }));
-    await page.goto('/');
+    const context = await newIsolatedContext();
+    const page = await context.newPage();
+    try {
+      await context.route(verification, (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"valid":true,"reason":"ok"}' }));
+      await page.goto(appUrl('/'));
     await page.getByRole('link', { name: 'Create your first objective' }).click();
     await page.getByLabel('Objective *').fill('Check free study actions');
     await page.getByRole('button', { name: 'Save objective' }).click();
@@ -376,7 +394,7 @@ test('@claim:one-time-price keeps reviews and both exports free before and after
     const firstBackup = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Download encrypted backup' }).click();
     await expect(await firstBackup).toBeTruthy();
-    await page.route(checkout, async (route) => {
+    await context.route(checkout, async (route) => {
       checkoutRequests += 1;
       expect(route.request().isNavigationRequest()).toBeTruthy();
       await route.fulfill({ status: 303, headers: { location: hostedCheckout } });
@@ -389,8 +407,15 @@ test('@claim:one-time-price keeps reviews and both exports free before and after
     ]);
     await expect(page.getByRole('heading', { name: 'Hosted checkout fixture' })).toBeVisible();
     expect(checkoutRequests).toBe(1);
-    await page.goto('/?license=price-license-token#/data');
+    const returnedLicense = page.waitForResponse((response) => response.url() === verification && response.status() === 200);
+    await page.goto(appUrl('/?license=price-license-token#/data'));
+    await returnedLicense;
+    await expect(page).toHaveURL(/\/data$/);
     await expect(page.getByText('Study archive · unlocked')).toBeVisible();
+    await expect(page.getByText('100% recall · 1 reviews')).toBeVisible();
+    await page.evaluate(() => { window.print = () => { document.documentElement.dataset.pricePrinted = 'yes'; }; });
+    await page.getByRole('button', { name: 'Print weekly summary' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-price-printed', 'yes');
     await page.getByRole('link', { name: /^Review/ }).click();
     await page.getByRole('button', { name: /Review this prompt/ }).click();
     await page.getByRole('button', { name: 'Reveal expected answer' }).click();
@@ -405,8 +430,42 @@ test('@claim:one-time-price keeps reviews and both exports free before and after
     const secondBackup = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Download encrypted backup' }).click();
     await expect(await secondBackup).toBeTruthy();
+    } finally {
+      await context.close();
+    }
   } finally {
     await new Promise<void>((resolve, reject) => fixture.close((error) => error ? reject(error) : resolve()));
+  }
+
+  // A return URL is the point where a buyer re-enters the product. Repeating
+  // it in independent contexts proves that no prior notebook, service worker,
+  // cached verdict, or checkout page can make the archive state appear by luck.
+  for (const attempt of [1, 2, 3]) {
+    const token = `returned-price-license-${attempt}`;
+    const returnVerification = `https://api.sociobot.in/api/v1/products/learning-objective-loop/verify?license=${token}`;
+    const context = await newIsolatedContext();
+    const page = await context.newPage();
+    let verificationRequests = 0;
+    try {
+      await context.route(returnVerification, (route) => {
+        verificationRequests += 1;
+        return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"valid":true,"reason":"ok"}' });
+      });
+      const returnedLicense = page.waitForResponse((response) => response.url() === returnVerification && response.status() === 200);
+      await page.goto(appUrl(`/?demo=1&license=${token}#/data`));
+      await returnedLicense;
+      await expect(page).toHaveURL(/\/data\?demo=1$/);
+      await expect(page.getByText('Study archive · unlocked')).toBeVisible();
+      await expect(page.getByText('100% recall across 1 reviews')).toBeVisible();
+      await expect(page.getByText('100% recall · 1 reviews')).toBeVisible();
+      await page.evaluate(() => { window.print = () => { document.documentElement.dataset.returnPrinted = 'yes'; }; });
+      await page.getByRole('button', { name: 'Print weekly summary' }).click();
+      await expect(page.locator('html')).toHaveAttribute('data-return-printed', 'yes');
+      expect(await page.evaluate(() => localStorage.getItem('sb_license:learning-objective-loop'))).toBe(token);
+      expect(verificationRequests).toBe(1);
+    } finally {
+      await context.close();
+    }
   }
 });
 
@@ -528,6 +587,21 @@ test('@claim:verified-license stores a returned license, strips it from the URL,
   await expect(page.locator('html')).toHaveAttribute('data-printed', 'yes');
   expect(await page.evaluate(() => localStorage.getItem('sb_license:learning-objective-loop'))).toBe('paid-license-token');
   expect(verificationRequests).toBe(1);
+});
+
+test('keeps a returned license locked and offers a retry when verification is unavailable', async ({ page }) => {
+  const verification = 'https://api.sociobot.in/api/v1/products/learning-objective-loop/verify?license=unavailable-license-token';
+  let attempts = 0;
+  await page.route(verification, async (route) => {
+    attempts += 1;
+    await route.abort('failed');
+  });
+  await page.goto('/?license=unavailable-license-token#/data');
+  await expect(page).toHaveURL(/\/data$/);
+  await expect(page.getByText('We could not check this license. Retry the check or try again when you are online.')).toBeVisible();
+  await expect(page.getByText('Study archive · unlocked')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retry license check' }).click();
+  await expect.poll(() => attempts).toBe(2);
 });
 
 test('keeps the private empty state accessible at 390px', async ({ page }) => {

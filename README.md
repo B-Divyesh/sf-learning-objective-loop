@@ -4,7 +4,7 @@ Objective Loop is a private review notebook for self-learners. It works without 
 
 Live product: <https://learning-objective-loop.sociobot.in>
 
-Try the isolated sample notebook: <https://learning-objective-loop.sociobot.in/demo>. Use **Reset demo** to restore the sample. Use **Open my notebook** to discard demo changes and return to your notebook. Older `?demo=1#/today` links redirect to `/demo`.
+Try the isolated sample notebook: <https://learning-objective-loop.sociobot.in/demo> or <https://learning-objective-loop.sociobot.in/?demo=1>. Use **Reset demo** to restore the sample. Use **Open my notebook** to discard demo changes and return to your notebook. Older `?demo=1#/today` links redirect to `/demo`.
 
 ## What it does
 

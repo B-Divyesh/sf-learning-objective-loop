@@ -26,6 +26,8 @@ let toastTimer: number | undefined;
 let updateReady = false;
 let isPremium = false;
 let licenseNotice = '';
+type LicenseStatus = 'none' | 'checking' | 'verified' | 'invalid' | 'unavailable';
+let licenseStatus: LicenseStatus = 'none';
 let reviewReturnFocus: { promptId: string; index: number } | null = null;
 
 class FormValidationError extends Error {
@@ -275,6 +277,7 @@ function editablePrompt(prompt: Prompt): string {
 }
 
 function premiumInsights(): string {
+  if (licenseStatus === 'checking') return `<section class="premium-panel" aria-live="polite"><div><p class="kicker">Study archive · returned license</p><h2>Checking your Study archive license</h2><p>We are confirming this purchase before showing archive reports. Core study actions and exports stay available.</p></div><div class="halftone-seal" aria-hidden="true">…</div></section>`;
   if (!isPremium) return `<section class="premium-panel"><div><p class="kicker">Study archive · paid unlock</p><h2>See patterns across your review history</h2><p>Unlock objective-level recall rates and printable weekly summaries for a one-time $19 purchase. All core objectives, prompts, reviews, manual dates, and encrypted exports remain free.</p><a class="button button-primary" href="${billingBase}/products/${slug}/checkout">Buy Study archive · $19 <span class="sr-only">at Sociobot (opens external checkout)</span></a></div><div class="halftone-seal" aria-hidden="true">19</div></section>`;
   const reviews = state.prompts.flatMap((prompt) => prompt.reviews);
   const correct = reviews.filter((review) => review.correct).length;
@@ -289,12 +292,15 @@ function premiumInsights(): string {
 }
 
 function dataView(): string {
+  const retryLicense = licenseStatus === 'unavailable' && localStorage.getItem(licenseKey)
+    ? '<button class="button button-quiet" type="button" data-action="retry-license">Retry license check</button>'
+    : '';
   return `${pageHeader('Data & access', 'Export, restore, or unlock reports', 'Exports happen entirely in this browser. Your passphrase is used only here and is not saved.')}
     ${premiumInsights()}
     <div class="data-grid"><section class="sheet"><h2>Encrypted backup</h2><p>Download a password-protected backup and a readable CSV. Technical details: PBKDF2-SHA256 with 250,000 iterations and AES-256-GCM.</p><form data-form="export"><div class="field"><label for="export-passphrase">Backup passphrase</label><input id="export-passphrase" name="passphrase" type="password" minlength="8" required autocomplete="new-password" aria-describedby="export-hint"><p class="hint" id="export-hint">At least 8 characters. It is used only in this browser and is not saved.</p></div><button class="button button-primary" type="submit">Download encrypted backup</button><button class="button button-quiet" type="button" data-action="csv">Export readable CSV</button><p class="form-error" role="alert"></p></form></section>
       <section class="sheet"><h2>Restore a backup</h2><p>Import replaces the current record after confirmation. Make a backup first if needed.</p><form data-form="import"><div class="field"><label for="import-file">Encrypted backup file</label><input id="import-file" name="file" type="file" accept=".loop,.json,application/json" required></div><div class="field"><label for="import-passphrase">Backup passphrase</label><input id="import-passphrase" name="passphrase" type="password" required autocomplete="current-password"></div><button class="button button-quiet" type="submit">Decrypt and restore</button><p class="form-error" role="alert"></p></form></section>
     </div>
-    <section class="license-box"><div><p class="kicker">Purchase access</p><h2>${isPremium ? 'Study archive is active' : 'Restore a Study archive license'}</h2><p>${esc(licenseNotice || (isPremium ? 'This device has a verified license.' : 'Paste the license token from your receipt to unlock this device.'))}</p></div><form data-form="license"><label for="license-token">License token</label><div class="joined"><input id="license-token" name="token" required autocomplete="off" spellcheck="false"><button class="button button-quiet" type="submit">Verify license</button></div><p class="form-error" role="alert"></p></form></section>`;
+    <section class="license-box"><div><p class="kicker">Purchase access</p><h2>${isPremium ? 'Study archive is active' : 'Restore a Study archive license'}</h2><p>${esc(licenseNotice || (isPremium ? 'This device has a verified license.' : 'Paste the license token from your receipt to unlock this device.'))}</p>${retryLicense}</div><form data-form="license"><label for="license-token">License token</label><div class="joined"><input id="license-token" name="token" required autocomplete="off" spellcheck="false"><button class="button button-quiet" type="submit">Verify license</button></div><p class="form-error" role="alert"></p></form></section>`;
 }
 
 function legalView(kind: 'privacy' | 'terms'): string {
@@ -513,22 +519,60 @@ function validatedEvidenceUrl(value: string): string {
   return new URL(candidate).href;
 }
 
-async function verifyLicense(token: string, force = false): Promise<void> {
-  const cached = JSON.parse(localStorage.getItem(verdictKey) || 'null') as { valid: boolean; checkedAt: number } | null;
+interface StoredLicenseVerdict {
+  token: string;
+  valid: boolean;
+  checkedAt: number;
+}
+
+function readLicenseVerdict(token: string): StoredLicenseVerdict | null {
+  try {
+    const raw = JSON.parse(localStorage.getItem(verdictKey) || 'null') as Partial<StoredLicenseVerdict> | null;
+    if (!raw || raw.token !== token || typeof raw.valid !== 'boolean' || typeof raw.checkedAt !== 'number') return null;
+    return raw as StoredLicenseVerdict;
+  } catch {
+    return null;
+  }
+}
+
+async function verifyLicense(token: string, force = false, returnedFromCheckout = false): Promise<void> {
+  const cached = readLicenseVerdict(token);
   if (!force && cached && Date.now() - cached.checkedAt < 86_400_000) {
     isPremium = cached.valid;
+    licenseStatus = cached.valid ? 'verified' : 'invalid';
+    licenseNotice = cached.valid ? 'This device has a verified license.' : 'This license is no longer active. Check the token or purchase access.';
     render();
     return;
+  }
+  const keepCachedUnlock = Boolean(cached?.valid && !returnedFromCheckout);
+  if (keepCachedUnlock) {
+    // A known license remains useful while its daily background check runs.
+    // A checkout return is intentionally excluded: that token must be checked
+    // before archive reports appear.
+    isPremium = true;
+    licenseStatus = 'verified';
+    licenseNotice = 'Checking your saved license…';
+  } else {
+    licenseStatus = 'checking';
+    licenseNotice = returnedFromCheckout ? 'Checking your returned license…' : 'Checking this license…';
+    render();
   }
   try {
     const response = await fetch(`${billingBase}/products/${slug}/verify?license=${encodeURIComponent(token)}`);
     if (!response.ok) throw new Error();
     const verdict = await response.json() as { valid: boolean; reason: string };
-    localStorage.setItem(verdictKey, JSON.stringify({ valid: verdict.valid, checkedAt: Date.now() }));
+    localStorage.setItem(verdictKey, JSON.stringify({ token, valid: verdict.valid, checkedAt: Date.now() }));
     isPremium = verdict.valid;
+    licenseStatus = verdict.valid ? 'verified' : 'invalid';
     licenseNotice = verdict.valid ? 'License verified. Study archive is unlocked.' : 'This license is no longer active. Check the token or purchase access.';
   } catch {
-    licenseNotice = 'License verification is unavailable. Your core notebook still works offline.';
+    // A previously verified matching token remains available offline. A
+    // returned token is never treated as unlocked until its own check succeeds.
+    isPremium = Boolean(cached?.valid);
+    licenseStatus = 'unavailable';
+    licenseNotice = isPremium
+      ? 'A saved license is active. We could not check it just now.'
+      : 'We could not check this license. Retry the check or try again when you are online.';
   }
   render();
 }
@@ -620,6 +664,7 @@ app.addEventListener('click', (event) => {
   if (target.dataset.action === 'retry') void boot();
   if (target.dataset.action === 'reset-demo') { void resetDemo(); return; }
   if (target.dataset.action === 'start-real') { void startForReal(); return; }
+  if (target.dataset.action === 'retry-license') { const token = localStorage.getItem(licenseKey); if (token) void verifyLicense(token, true); return; }
   if (target.dataset.action === 'csv') { download(`objective-loop-${new Date().toISOString().slice(0, 10)}.csv`, csvExport(), 'text/csv'); showToast('Readable CSV downloaded.'); render(); }
   if (target.dataset.action === 'print') window.print();
   if (target.dataset.action === 'reload-update') location.reload();
@@ -679,8 +724,22 @@ window.addEventListener('offline', () => render());
 function setupLicense(): void {
   const params = new URLSearchParams(location.search); const incoming = params.get('license');
   if (incoming) { localStorage.setItem(licenseKey, incoming); params.delete('license'); const search = params.toString(); history.replaceState({}, '', `${location.pathname}${search ? `?${search}` : ''}`); }
-  const token = incoming || localStorage.getItem(licenseKey); const cached = JSON.parse(localStorage.getItem(verdictKey) || 'null') as { valid: boolean } | null;
-  isPremium = Boolean(cached?.valid); if (token) void verifyLicense(token);
+  const token = incoming || localStorage.getItem(licenseKey);
+  if (!token) return;
+  const cached = readLicenseVerdict(token);
+  // A checkout return always receives a fresh verdict for the returned token.
+  // Stored licenses retain their last verified state while their daily check is
+  // still fresh, so offline first paint remains useful.
+  if (incoming) {
+    isPremium = false;
+    licenseStatus = 'checking';
+    licenseNotice = 'Checking your returned license…';
+    void verifyLicense(token, true, true);
+    return;
+  }
+  isPremium = Boolean(cached?.valid);
+  licenseStatus = cached ? (cached.valid ? 'verified' : 'invalid') : 'checking';
+  void verifyLicense(token);
 }
 
 function setupPwa(): void {
