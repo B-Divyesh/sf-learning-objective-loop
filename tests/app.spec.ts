@@ -53,6 +53,7 @@ test('aligns a fresh direct /today deep link with its review queue title, H1, an
   const context = await browser.newContext({
     baseURL: String(testInfo.project.use.baseURL || 'http://127.0.0.1:4173'),
     serviceWorkers: 'block',
+    viewport: { width: 390, height: 844 },
   });
   const page = await context.newPage();
 
@@ -66,6 +67,9 @@ test('aligns a fresh direct /today deep link with its review queue title, H1, an
     await expect(page.getByText('No reviews are due because this notebook has no learning objectives.')).toBeVisible();
     await expect(page.locator('.page-head').getByRole('link', { name: 'Create objective', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Plan reviews around your learning objectives' })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth === document.documentElement.clientWidth)).toBeTruthy();
+    const results = await new AxeBuilder({ page: page as never }).withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))).toEqual([]);
   } finally {
     await context.close();
   }
