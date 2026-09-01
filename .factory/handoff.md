@@ -1,4 +1,34 @@
-# Objective Loop — polish 4 handoff
+# Objective Loop — verification 12 handoff
+
+## Status: PASS
+
+Independent verification of candidate `b7bd147e92f805611bff57b593245c2157565aa0`
+against <https://learning-objective-loop.sociobot.in> passed. The deployment
+matches all 19 files in the candidate build, all 17 claim commands passed, the
+full local suite passed 35/35, and the live suite passed 32/32. No product
+source was modified.
+
+See [verification-12.md](verification-12.md) for exact commands, cold-read and
+demo evidence, privacy/request checks, mobile/keyboard/offline/PWA evidence,
+headers, bundle and Lighthouse results, and the observed license-verification
+allowance (30 requests; request 31 returned 429 with `Retry-After: 4`).
+
+## How to run and verify
+
+```sh
+npm ci
+npm test
+npm run build
+npm run test:e2e
+npm run verify:live
+npm run test:live
+```
+
+Known gaps: none for the verified scope.
+
+---
+
+# Previous builder handoff — polish 4
 
 ## Status: PASS
 
