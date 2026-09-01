@@ -3,7 +3,7 @@
   "name": "Objective Loop",
   "short_name": "Obj. Loop",
   "description": "Objective-aware recall prompts with an explainable review schedule.",
-  "start_url": "/today?v=3",
+  "start_url": "/today?v=4",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

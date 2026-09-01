@@ -49,13 +49,35 @@ test('uses real routes with route titles, focus, and an announcement after keybo
   expect(consoleErrors).toEqual([]);
 });
 
+test('aligns a fresh direct /today deep link with its review queue title, H1, and empty action', async ({ browser }, testInfo) => {
+  const context = await browser.newContext({
+    baseURL: String(testInfo.project.use.baseURL || 'http://127.0.0.1:4173'),
+    serviceWorkers: 'block',
+  });
+  const page = await context.newPage();
+
+  try {
+    await page.goto('/today');
+    await expect(page).toHaveURL(/\/today$/);
+    await expect(page).toHaveTitle('Review queue — Objective Loop');
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', 'Review due recall prompts and inspect each next review date.');
+    await expect(page.getByRole('heading', { name: 'Review queue', level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'No prompts to review', level: 2 })).toBeVisible();
+    await expect(page.getByText('No reviews are due because this notebook has no learning objectives.')).toBeVisible();
+    await expect(page.locator('.page-head').getByRole('link', { name: 'Create objective', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Plan reviews around your learning objectives' })).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
 test('ships social metadata, a Param Factory footer, and a designed static 404', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/$/);
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /Objective Loop/);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /objective-loop-social\.webp$/);
   await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute('content', 'summary_large_image');
-  await expect(page.getByText(/Built by Param Factory · build 1\.0\.5-polish-3/)).toBeVisible();
+  await expect(page.getByText(/Built by Param Factory · build 1\.0\.6-polish-4/)).toBeVisible();
   await page.goto('/404.html');
   await expect(page.getByRole('heading', { name: 'Page not found', level: 1 })).toBeVisible();
   await expect(page).toHaveTitle('Page not found — Objective Loop');

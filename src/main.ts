@@ -9,7 +9,7 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 if (!app) throw new Error('App root is missing.');
 
 const slug = 'learning-objective-loop';
-const buildId = '1.0.5-polish-3';
+const buildId = '1.0.6-polish-4';
 const billingBase = import.meta.env.VITE_BILLING_API_BASE || 'https://api.sociobot.in/api/v1';
 const licenseKey = `sb_license:${slug}`;
 const verdictKey = `${licenseKey}:verdict`;
@@ -180,8 +180,23 @@ function emptyToday(): string {
   </section>`;
 }
 
+function emptyReviewQueue(): string {
+  return `${pageHeader(
+    'Due reviews',
+    'Review queue',
+    'No reviews are due because this notebook has no learning objectives.',
+    `<a class="button button-primary" href="${appHref('/new-objective')}">Create objective</a>`,
+  )}
+    <section class="blank-state" aria-labelledby="empty-review-heading">
+      <div class="loop-glyph" aria-hidden="true">↻</div>
+      <h2 id="empty-review-heading">No prompts to review</h2>
+      <p>Create a learning objective, then add a recall prompt. It will appear here when it is due.</p>
+      <a class="button button-quiet" href="/demo">Try it with sample data</a>
+    </section>`;
+}
+
 function todayView(): string {
-  if (!state.objectives.length) return emptyToday();
+  if (!state.objectives.length) return route() === '/today' ? emptyReviewQueue() : emptyToday();
   const due = duePrompts();
   const upcoming = sortedPrompts().filter((prompt) => !isDue(prompt)).slice(0, 5);
   const reviewed = state.prompts.reduce((sum, prompt) => sum + prompt.reviews.length, 0);

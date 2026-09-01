@@ -1,4 +1,4 @@
-# Copy audit — polish 3
+# Copy audit — polish 4
 
 Audited 2026-09-01. Word counts treat hyphenated terms, `$19`, and URLs as one
 word. Every landing sentence is 22 words or fewer and uses no banned marketing
@@ -28,7 +28,17 @@ language.
 | Evidence links open only when you select them. | 8 | Privacy exception |
 | Core reviews, CSV, and backups stay free. | 7 | Paid boundary |
 | The one-time archive adds objective recall rates and printable weekly summaries. | 11 | Paid output |
-| Schedule recall reviews around clear learning objectives. | 7 | Catalog description |
+| Plan recall reviews around clear learning objectives. | 7 | Catalog description |
+
+## Direct empty review route
+
+| Copy | Words | Role |
+| --- | ---: | --- |
+| Review queue | 2 | Route headline |
+| No reviews are due because this notebook has no learning objectives. | 11 | Empty-state explanation |
+| No prompts to review | 4 | Empty-state heading |
+| Create a learning objective, then add a recall prompt. | 9 | Empty-state first step |
+| It will appear here when it is due. | 8 | Empty-state result |
 
 ## Terminology
 
