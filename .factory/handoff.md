@@ -1,30 +1,49 @@
-# Objective Loop — review 4 handoff
+# Objective Loop — polish 4 handoff
 
-## Status: FAIL
+## Status: PASS
 
-Reviewer work only: product source was not modified. The live deployment
-byte-matches the current build across 19 files. Its `index.html` SHA-256 is
-`2bb26823565d4e2b732d139244de5a074749f775ab6a02c0556d2d2ddeb822ee`.
+The released candidate now gives a direct empty `/today` visit a coherent
+Review queue page: route title, metadata, H1, empty explanation, and primary
+action all describe the same destination. `/` remains the first-use landing
+page, and `/demo` plus `/?demo=1` remain isolated sample paths.
 
-## What was checked
+Runtime repair commits are `5055435` and `ebaa09e`. The production deployment
+at <https://learning-objective-loop.sociobot.in> byte-matches the candidate.
 
-- A fresh clone at `3d81124` completed all 17 exact claim commands in
-  `.factory/claims.json` serially.
-- The fresh clone passed `npm test` (8/8), `npm run build`, and
-  `npm run test:e2e` (34/34).
-- The live build passed `npm run verify:live` and a serial `npm run test:live`
-  run (31/31).
-- Fresh 390px and desktop contexts confirmed the cold first-read answers,
-  one-click sample demo, demo banner/reset, request-origin boundary, console
-  cleanliness, metadata, internal-link responses, and route/accessibility
-  checks.
+## What changed
 
-## Open finding
+- Added the direct empty Review queue state and a fresh-context 390 × 844
+  regression covering title, description, H1, action, overflow, and axe.
+- Bumped the visible build id to `1.0.6-polish-4` and the installed-app start
+  URL version to `v=4`.
+- Updated the catalog line to “Plan recall reviews around clear learning
+  objectives.” It is verb-first and 53 characters.
+- Re-audited every earlier finding. The complete mapping is in
+  `.factory/polish-4.md`; no earlier fix regressed.
 
-- `F-4-1` in `.factory/review-4.md`: a direct empty `/today` visit uses the
-  title “Review queue — Objective Loop” but renders the landing/onboarding H1
-  “Plan reviews around your learning objectives.” Align the route title, H1,
-  and empty state, and add a fresh-context deep-link regression test.
+## Verification
+
+- Clean clone at `5055435`: `npm ci`; every one of the 17 exact claim commands;
+  `npm test` (8 passed); `npm run build`; `npm run test:e2e` (35 passed).
+- Final local candidate at `ebaa09e`: `npm test` (8 passed), `npm run build`,
+  and `npm run test:e2e` (35 passed).
+- Production: `npm run verify:live` passed with 19 matching files and index
+  SHA-256
+  `968b3bc94c72d8e905ff3fb8e24a348d47cb43c146727c60bccea0110bae7565`.
+- Production: `npm run test:live` passed all 32 application tests.
+- Worker verifier: `/` and `/today` returned 200 with no console errors,
+  `lang=en`, one H1, one main landmark, image alt text, and labelled buttons.
+- Live route checks: `/`, `/today`, `/demo`, `/?demo=1`, `/objectives`,
+  `/new-objective`, `/data`, `/privacy`, `/terms`, and `/404.html` returned
+  200; an unknown route returned the designed 404 with HTTP 404.
+- Live Lighthouse mobile: performance 99, accessibility 100, best practices
+  100, SEO 100; LCP 1.2 s, CLS 0, TBT 100 ms.
+- Bundle: 16.11 KB gzip JavaScript and 5.64 KB gzip CSS.
+
+Evidence is under `.factory/polish-4-artifacts/`. The key screenshots are
+`verify-live-root/screenshot-mobile.png`,
+`verify-live-today/screenshot-mobile.png`, and
+`live-demo-direct-mobile.png`.
 
 ## Run and verify
 
@@ -37,5 +56,7 @@ npm run verify:live
 npm run test:live
 ```
 
-See `.factory/review-4.md` for the full review, copy audit, claim results, and
-earlier-finding closure check.
+## Known gaps and next steps
+
+None for the reviewed scope. Deployment and DNS are healthy; no infrastructure
+outside `sf-learning-objective-loop` and its own domain was accessed.
